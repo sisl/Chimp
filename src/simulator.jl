@@ -118,3 +118,13 @@ function simulate!(
   sim
 
 end # function simulate!
+
+
+function experience(sim::POMDPSimulator)
+  return Experience(sim)
+end
+
+
+function next_state(sim::POMDPSimulator)
+  return sim.sp
+end
