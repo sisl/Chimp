@@ -1,7 +1,14 @@
 module PODRL
 
-using Simulator
-using ReplayDataset
+using 
+  POMDPs,
+  Simulator,
+  ReplayDataset
+
+export
+    POMDPSimulator,
+    simulate!,
+    experience_tuple
 
 
 
