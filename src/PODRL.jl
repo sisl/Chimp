@@ -1,14 +1,15 @@
 module PODRL
 
+using 
+  POMDPs,
+  Simulator,
+  ReplayDataset
+
 export
     POMDPSimulator,
     simulate!,
     experience_tuple
 
 
-using POMDPs
-
-
-include("simulator.jl")
 
 end # module PODRL
