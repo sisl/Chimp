@@ -77,3 +77,7 @@ end
 function experience_tuple(sim::POMDPSimulator)
     return (sim.b, sim.a, sim.r, sim.bp)
 end
+
+function next_state(sim::POMDPSimulator)
+    return sim.sp
+end
