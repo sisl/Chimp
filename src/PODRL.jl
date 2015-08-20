@@ -1,5 +1,8 @@
 module PODRL
 
-include("simulator.jl")
+using Simulator
+using ReplayDataset
+
+
 
 end # module PODRL
