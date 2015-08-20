@@ -2,8 +2,14 @@ module PODRL
 
 using 
   POMDPs,
-  Simulator,
-  ReplayDataset
+  HDF5,
+  JLD,
+  Const
+  
+include("deepnet.jl")
+include("expgain.jl")
+include("simulator.jl")
+include("replaydataset.jl")
 
 export
     POMDPSimulator,
