@@ -22,9 +22,9 @@ type ReplayDataset
   fp::HDF5File
   
   belief::HDF5Dataset
-  action::HDF5Dataset
-  reward::HDF5Dataset
-  isterm::HDF5Dataset
+  action::Vector{Int64}
+  reward::Vector{Float64}
+  isterm::Vector{Int32}
 
   rdsize::Int64
   head::Int64  # index of current 'write' location (mimics queue)
@@ -65,9 +65,11 @@ type ReplayDataset
       d_create(fp, "reward", datatype(Float64), dataspace(rdsize, 1))
       d_create(fp, "isterm", datatype(Int32), dataspace(rdsize, 1))  # use as booleans
 
+      # TODO: types don't match hdf5dataset
+      
       action = zeros(Int64, rdsize)
       reward = zeros(Float64, rdsize)
-      isterm = zeros(Bool, rdsize)
+      isterm = zeros(Int32, rdsize)
 
       attrs(belief)["head"] = 1
       attrs(belief)["valid"] = 0
@@ -105,7 +107,7 @@ function close!(rd::ReplayDataset)
 
   rd.fp["action"] = rd.action
   rd.fp["reward"] = rd.reward
-  rd.fp["isterm"] = [term ? 1 : 0 for term in rd.isterm]
+  rd.fp["isterm"] = rd.isterm
   
   attrs(rd.belief)["head"] = rd.head
   attrs(rd.belief)["valid"] = rd.valid
@@ -133,9 +135,9 @@ function add_experience!(rd::ReplayDataset, exp::Exp)
 
   if exp.isterm
     rd.belief[rd.head, :] = exp.bp
-    rd.isterm[rd.head] = true
+    rd.isterm[rd.head] = 1
   else
-    rd.isterm[rd.head] = false
+    rd.isterm[rd.head] = 0
   end  # if
 
   # update head and valid pointer indices
