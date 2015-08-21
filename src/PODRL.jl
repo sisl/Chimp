@@ -5,17 +5,12 @@ using
   HDF5,
   JLD,
   Const
-  
+
 include("deepnet.jl")
 include("expgain.jl")
 include("simulator.jl")
 include("replaydataset.jl")
 
-export
-    POMDPSimulator,
-    simulate!,
-    experience_tuple
-
-
+# export  
 
 end # module PODRL
