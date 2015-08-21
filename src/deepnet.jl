@@ -1,13 +1,13 @@
-# Wrapper around deep neural network provided by Mocha.jl
-type DeepNet
+# wrapper around deep neural network provided by Mocha.jl
+type Deepnet
 
 
 
-end # type DeepNet
+end  # type Deepnet
 
 
-function select_action(deepnet::DeepNet, belief::Belief)
+function select_action(deepnet::Deepnet, belief::Belief)
 
 
 
-end # function select_action
+end  # function select_action

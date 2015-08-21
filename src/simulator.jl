@@ -11,23 +11,24 @@ type POMDPSimulator <: Simulator
 
   trans_dist::AbstractDistribution
   obs_dist::AbstractDistribution
-
   rng::AbstractRNG
+
+  simover::Bool
   
   function POMDPSimulator(pomdp::POMDP; rng::AbstractRNG=MersenneTwister(rand(Uint32)))
 
-    b = create_belief(pomdp)
-    s = create_state(pomdp)
+    b = create_belief(pomdp)  # initial belief based on problem definition
+    s = create_state(pomdp)  # initial state based on problem definition
     o = create_observation(pomdp)
 
     trans_dist = create_transition_distribution(pomdp)
     obs_dist = create_observation_distribution(pomdp)
     
-    return new(pomdp, b, s, o, trans_dist, obs_dist, rng)
+    return new(pomdp, b, s, o, trans_dist, obs_dist, rng, false)
 
-  end # function POMDPSimulator
+  end  # function POMDPSimulator
 
-end # type POMDPSimulator
+end  # type POMDPSimulator
 
 
 type Exp
@@ -36,11 +37,11 @@ type Exp
   a::Action
   r::Reward
   bp::Belief
+  isterm::Bool  # whether sp is really terminal state
 
-end # type Exp
+end  # type Exp
 
 
-# Updates simulator state and returns experience
 function simulate!(sim::POMDPSimulator, a::Action)
   
   r = reward(sim.pomdp, sim.s, a)
@@ -55,6 +56,19 @@ function simulate!(sim::POMDPSimulator, a::Action)
   update_belief!(sim.b, sim.pomdp, a, sim.o)
   bp = deepcopy(sim.b)
 
-  return Exp(b, deepcopy(a), r, bp)
+  isterm = isterminal(sim.pomdp, sim.s)
+  if isterm
+    reset!(sim)
+  end  # if
 
-end # function simulate!
+  return Exp(b, deepcopy(a), r, bp, isterm)  # must be memory-independent
+
+end  # function simulate!
+
+
+function reset!(sim::POMDPSimulator)
+
+  sim.b = create_belief(sim.pomdp)
+  sim.s = create_state(sim.pomdp)
+
+end  # function reset!

@@ -1,45 +1,47 @@
-typealias ActionSet Vector{Action}
+# actions must be a discrete set, since we're dealing with dnn
+typealias Actions Vector{Action}
 
 
-# Interface between simulator and replay dataset
-type ExpGain
+# interface between simulator and replay dataset
+type Expgain
 
   deepnet::DeepNet
-  simulator::Simulator
+  sim::Simulator
   dataset::ReplayDataset
-  simover::Bool
   
-  actions::ActionSet
+  actions::Actions
   prevBelief::Belief
 
-end # type ExpGain
+end  # type Expgain
 
 
-function select_action(expgain::ExpGain, belief::Belief, epsilon::Float64)
+function select_action(expgain::Expgain, belief::Belief, epsilon::Float64)
 
   if rand() < epsilon
-    return expgain.actions[rand(1:length(actions))]
+    return expgain.actions[rand(1:length(expgain.actions))]
   else
     return expgain.actions[select_action(expgain.deepnet, belief)]
-  end # if
+  end  # if
 
-end # function select_action
+end  # function select_action
 
 
 function get_epsilon(iter::Int64)
 
-  if iter > Const.EpsilonCount
-    return Const.EpsilonMin
+  if iter > EpsilonCount
+    return EpsilonMin
   else
-    return Const.EpsilonFinal + (Const.EpsilonStart - Const.EpsilonFinal) * 
-           max(Const.EpsilonCount - iter, 0) / Const.EpsilonCount
-  end # if
+    return EpsilonFinal + (EpsilonStart - EpsilonFinal) * 
+           max(EpsilonCount - iter, 0) / EpsilonCount
+  end  # if
 
-end # function get_epsilon
-
-
-function generate_experience()
+end  # function get_epsilon
 
 
+# mutates simulator in expgain to get new experience
+function generate_experience!(expgain::ExpGain, iter::Int64)
 
-end # function generate_experience
+  a = select_action(expgain, get_epsilon(iter))
+  return simulate!(expgain.sim, a)
+
+end  # function generate_experience!
