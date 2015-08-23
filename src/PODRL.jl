@@ -1,9 +1,6 @@
 module PODRL
 
 using 
-  POMDPs,
-  HDF5,
-  JLD,
   Const
 
 include("deepnet.jl")

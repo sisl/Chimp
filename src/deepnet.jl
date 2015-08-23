@@ -1,3 +1,5 @@
+using Mocha
+
 # wrapper around deep neural network provided by Mocha.jl
 type Deepnet
 
