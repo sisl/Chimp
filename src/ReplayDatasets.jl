@@ -1,5 +1,3 @@
-module ReplayDatasets
-
 #= Implements type for reading/writing experiences to the replay dataset.
 
 We assume
@@ -14,6 +12,7 @@ a dense vector with a maximum of 1,000 Float64 elements (typical state spaces
 are on the order of millions). In this case the full history of 1 million
 states would be (1,000 elem x 8 bytes x 1 M = 8 GB).
 =#
+module ReplayDatasets
 
 push!(LOAD_PATH, ".")
 
