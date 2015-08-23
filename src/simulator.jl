@@ -52,16 +52,19 @@ function simulate!(sim::POMDPSimulator, a::Action)
   observation!(sim.obs_dist, sim.pomdp, sim.s, a)
   rand!(sim.rng, sim.o, sim.obs_dist)
 
+  update_belief!(sim.bp, sim.pomdp, sim.b, a, sim.o)
+
   b = deepcopy(sim.b)
-  update_belief!(sim.b, sim.pomdp, a, sim.o)
-  bp = deepcopy(sim.b)
+  bp = deepcopy(sim.bp)
+  # swap the beliefs so that the b at the next step is bp
+  sim.bp, sim.b = sim.b, sim.bp 
 
   isterm = isterminal(sim.pomdp, sim.s)
   if isterm
     reset!(sim)
   end  # if
 
-  return Exp(b, deepcopy(a), r, bp, isterm)  # must be memory-independent
+  return Exp(bold, deepcopy(a), r, b, isterm)  # must be memory-independent
 
 end  # function simulate!
 
