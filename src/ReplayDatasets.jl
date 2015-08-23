@@ -1,20 +1,26 @@
+module ReplayDatasets
+
 #= Implements type for reading/writing experiences to the replay dataset.
 
 We assume
-
-(1) Actions and rewards for the full history fit comfortably in memory.
-(2) The belief state representation for the full history does not.
+(1) Actions and rewards for the full history fit comfortably in memory,
+(2) The belief state representation for the full history does not,
 (3) A single sample of belief states fits comfortably in memory.
 
 For instance, if the replay dataset stores the last 1 million experiences,
 then the history of actions is 1 byte x 1 M = 1 MB. The same holds for the
 history of rewards. However, a modest belief state representation might be
-a dense vector with a maximum of 1,000 Float64 elements (typical
-state spaces are on the order of millions). In this case the full history of
-1 million states would be (1,000 elem x 8 bytes x 1 M = 8 GB).
+a dense vector with a maximum of 1,000 Float64 elements (typical state spaces
+are on the order of millions). In this case the full history of 1 million
+states would be (1,000 elem x 8 bytes x 1 M = 8 GB).
 =#
 
-using HDF5
+push!(LOAD_PATH, ".")
+
+using POMDPs, HDF5, Const, Simulators
+
+export ReplayDataset, close!, add_experience!, sample
+
 
 # wrapper around a replay dataset residing on disk as HDF5
 type ReplayDataset
@@ -53,7 +59,8 @@ type ReplayDataset
       isterm = read(fp["isterm"])
 
       if rdsize != ReplayDatasetSize
-        @printf "[WARN] Dataset loaded from %s is of size %d, not %d as requested. Using existing size." filename, rdsize, ReplayDatasetSize
+        @printf("[WARN] Dataset loaded from %s is of size %d, not %d as requested. Using existing size.",
+                filename, rdsize, ReplayDatasetSize)
       end  # if
 
     else 
@@ -154,12 +161,12 @@ Args:
 
 Returns:
     A tuple of numpy arrays for the |sample_size| experiences 
-
+      
       Exp(b, a, r, bp).
 
     The first dimension of each array corresponds to the experience
     index. The i_th experience is given by
-
+      
       Exp(belief[i], action[i], reward[i], next_belief[i]).
 =#
 function sample(rd::ReplayDataset, sample_size::Int64)
@@ -196,8 +203,10 @@ function sample(rd::ReplayDataset, sample_size::Int64)
         rd.action[next_indices[ibelief]],  # a
         rd.reward[next_indices[ibelief]],  # r
         read(rd.belief[next_indices[ibelief], :],
-        rd.isterm[next_indices[ibelief]])
+        rd.isterm[next_indices[ibelief]]))
 
   end  # for ibelief
 
 end  # function sample!
+
+end  # module ReplayDatasets

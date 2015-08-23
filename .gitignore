@@ -55,3 +55,9 @@
 ########
 *.swp
 *.ipynb
+
+# Julia packages #
+##################
+POMDPModels.jl
+POMDPs.jl
+POMDPToolbox.jl

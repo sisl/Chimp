@@ -1,3 +1,12 @@
+module Simulators
+
+push!(LOAD_PATH, ".")
+
+using POMDPs
+
+export Exp, Simulator, simulate!
+
+
 abstract Simulator
 
 
@@ -52,19 +61,19 @@ function simulate!(sim::POMDPSimulator, a::Action)
   observation!(sim.obs_dist, sim.pomdp, sim.s, a)
   rand!(sim.rng, sim.o, sim.obs_dist)
 
-  update_belief!(sim.bp, sim.pomdp, sim.b, a, sim.o)
-
   b = deepcopy(sim.b)
-  bp = deepcopy(sim.bp)
-  # swap the beliefs so that the b at the next step is bp
-  sim.bp, sim.b = sim.b, sim.bp 
+  bp = create_belief(sim.pomdp)
+  
+  update_belief!(bp, sim.pomdp, sim.b, a, sim.o)
+  sim.b = deepcopy(bp)
 
   isterm = isterminal(sim.pomdp, sim.s)
   if isterm
     reset!(sim)
   end  # if
 
-  return Exp(bold, deepcopy(a), r, b, isterm)  # must be memory-independent
+  # must be memory-independent
+  return Exp(b, deepcopy(a), r, bp, isterm)
 
 end  # function simulate!
 
@@ -75,3 +84,5 @@ function reset!(sim::POMDPSimulator)
   sim.s = create_state(sim.pomdp)
 
 end  # function reset!
+
+end  # module Simulators
