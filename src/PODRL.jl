@@ -1,12 +1,11 @@
 module PODRL
 
-using 
-  Const
-
-include("deepnet.jl")
-include("expgain.jl")
-include("simulator.jl")
-include("replaydataset.jl")
+using
+  Const,
+  Deepnets,
+  Expgains,
+  ReplayDatasets,
+  Simulators
 
 # export  
 

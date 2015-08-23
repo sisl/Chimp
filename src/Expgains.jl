@@ -1,3 +1,12 @@
+module Expgains
+
+push!(LOAD_PATH, ".")
+
+using POMDPs, Const, Deepnets, ReplayDatasets, Simulators
+
+export Expgain, generate_experience
+
+
 # actions must be a discrete set, since we're dealing with dnn
 typealias Actions Vector{Action}
 
@@ -5,7 +14,7 @@ typealias Actions Vector{Action}
 # interface between simulator and replay dataset
 type Expgain
 
-  deepnet::DeepNet
+  deepnet::Deepnet
   sim::Simulator
   dataset::ReplayDataset
   
@@ -29,7 +38,7 @@ end  # function select_action
 function get_epsilon(iter::Int64)
 
   if iter > EpsilonCount
-    return EpsilonMin
+    return EpsilonFinal
   else
     return EpsilonFinal + (EpsilonStart - EpsilonFinal) * 
            max(EpsilonCount - iter, 0) / EpsilonCount
@@ -39,9 +48,11 @@ end  # function get_epsilon
 
 
 # mutates simulator in expgain to get new experience
-function generate_experience!(expgain::ExpGain, iter::Int64)
+function generate_experience!(expgain::Expgain, iter::Int64)
 
   a = select_action(expgain, get_epsilon(iter))
   return simulate!(expgain.sim, a)
 
 end  # function generate_experience!
+
+end  # module Expgains
