@@ -25,7 +25,11 @@ export
   observation!,
   update_belief!,
   rand!,  # sample from distribution
-  isterminal  # checks if state (not belief) is terminal
+  isterminal,  # checks if state (not belief) is terminal
+
+  # standard mdp sets
+  actions,
+  n_states
 
 
 typealias Belief Vector{Float64}
@@ -74,4 +78,7 @@ rand!(rng::AbstractRNG, state::Any, d::AbstractDistribution) =
 isterminal(pomdp::POMDP, state::State) =
   error("$(typeof(pomdp)) does not implement isterminal")
 
+# standard mdp sets
+actions(pomdp::POMDP) = error("$(typeof(pomdp)) does not implement actions") 
+n_states(pomdp::POMDP) = error("$(typeof(pomdp)) does not implement n_states") 
 end  # module POMDPs

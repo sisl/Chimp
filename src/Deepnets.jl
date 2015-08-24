@@ -12,19 +12,18 @@ using
 
 export
   Deepnet,
-  select_action
+  select_action,
+  update_net!
 
 
 # wrapper around deep neural network provided by Mocha.jl
 type Deepnet
 
   net
-  dataset
-  # logger
+  samples::Vector{Exp}  # allocate memory for network inputs
+  delta::Vector{Float64}  # allocate memory for param change
 
-  # allocate memory for network inputs
-  sample_size::Int64
-  samples::Vector{Exp}
+  # TODO: add logger
 
   function Deepnet(sample_size::Int64=MinibatchSize)
 
@@ -35,6 +34,13 @@ type Deepnet
 end  # type Deepnet
 
 
+function copy!(to::Deepnet, from::Deepnet)
+
+
+
+end  # function copy!
+
+
 function select_action(deepnet::Deepnet, belief::Belief)
 
 
@@ -43,7 +49,7 @@ end  # function select_action
 
 
 # samples from the replay dataset and writes it to mocha-visible memory
-function load_minibatch!(deepnet::Deepnet)
+function load_minibatch!(deepnet::Deepnet, rd::ReplayDataset)
 
 
 
@@ -62,5 +68,13 @@ function forward_pass!(deepnet::Deepnet)
 
 
 end  # function forward_pass!
+
+
+# updates deepnet with deepnet.delta
+function update_params!(deepnet::Deepnet)
+
+
+
+end  # function update_params!
 
 end  # module Deepnets

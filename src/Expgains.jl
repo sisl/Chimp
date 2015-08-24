@@ -14,16 +14,14 @@ export
   generate_experience
 
 
-# interface between simulator and replay dataset
+# training interface with simulator and replay dataset for deepnet
 type Expgain
 
   deepnet::Deepnet
   sim::Simulator
   dataset::ReplayDataset
+  actions::Vector{Action}
   
-  actions::Actions
-  prevBelief::Belief
-
 end  # type Expgain
 
 

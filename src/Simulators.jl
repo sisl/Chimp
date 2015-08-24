@@ -7,7 +7,8 @@ using POMDPs
 export
   Exp,
   Simulator,
-  simulate!
+  simulate!,
+  reset!
 
 
 abstract Simulator

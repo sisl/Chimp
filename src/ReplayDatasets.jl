@@ -48,8 +48,8 @@ type ReplayDataset
   valid::Int64
 
   function ReplayDataset(
-      filename::String,
       belief_length::Int64,  # assumes belief is a vector of floats
+      filename::String=ReplayDatasetFile,
       overwrite::Bool=false)
 
     if overwrite

@@ -12,6 +12,9 @@ const MinibatchSize = 32
 const NetUpdateFreq = 100  # increase to 10,000  
 const DiscountFactor = 0.99
 
+const Episodes = 50  # increase to 200
+const EpisodeLength = 1000  # increase to 100,000
+
 # RMSProp
 const LearnRate = 2.5e-4
 const RMSGradMomentum = 0.95
