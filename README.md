@@ -5,5 +5,4 @@ PODRL.jl ("puddle") implements a version of reinforcement learning called deep Q
 # Dependencies
 
 The following Julia packages are required to use PODRL.
-* [POMDPs.jl](https://github.com/sisl/POMDPs.jl)
 * [Mocha.jl](https://github.com/pluskid/Mocha.jl)
