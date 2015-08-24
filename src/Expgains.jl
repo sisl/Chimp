@@ -2,13 +2,16 @@ module Expgains
 
 push!(LOAD_PATH, ".")
 
-using POMDPs, Const, Deepnets, ReplayDatasets, Simulators
+using
+  POMDPs,
+  Const,
+  Deepnets,
+  ReplayDatasets,
+  Simulators
 
-export Expgain, generate_experience
-
-
-# actions must be a discrete set, since we're dealing with dnn
-typealias Actions Vector{Action}
+export
+  Expgain,
+  generate_experience
 
 
 # interface between simulator and replay dataset

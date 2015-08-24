@@ -4,7 +4,10 @@ push!(LOAD_PATH, ".")
 
 using POMDPs
 
-export Exp, Simulator, simulate!
+export
+  Exp,
+  Simulator,
+  simulate!
 
 
 abstract Simulator

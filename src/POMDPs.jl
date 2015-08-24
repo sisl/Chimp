@@ -6,7 +6,6 @@ export
   State,
   Observation,
   Action,
-  Actions,
   Reward,
   
   # abstract types
@@ -33,7 +32,6 @@ typealias Belief Vector{Float64}
 typealias State Vector{Float64}
 typealias Observation Vector{Float64}
 typealias Action Int64
-typealias Actions Vector{Action}
 typealias Reward Float64
 
 

@@ -5,6 +5,7 @@ export MinibatchSize, NetUpdateFreq, DiscountFactor,
        EpsilonStart, EpsilonFinal, EpsilonCount,
        ReplayDatasetSize, ReplayStartSize
 
+
 # deep q-learning
 const MinibatchSize = 32
 # number of new states generated before deepnet update

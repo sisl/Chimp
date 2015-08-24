@@ -16,9 +16,18 @@ module ReplayDatasets
 
 push!(LOAD_PATH, ".")
 
-using POMDPs, HDF5, Const, Simulators
+using
+  HDF5,
+  POMDPs,
+  Const,
+  Simulators
 
-export ReplayDataset, close!, add_experience!, sample
+export
+  ReplayDataset,
+  close!,
+  add_experience!,
+  sample,
+  sample!
 
 
 # wrapper around a replay dataset residing on disk as HDF5
@@ -27,9 +36,9 @@ type ReplayDataset
   fp::HDF5File
   
   belief::HDF5Dataset
-  action::Vector{Int64}
-  reward::Vector{Float64}
-  isterm::Vector{Int32}
+  action::Vector{Action}
+  reward::Vector{Reward}
+  isterm::Vector{Int32}  # Int32 for Bool; h5 can't use Bool
 
   rdsize::Int64
   head::Int64  # index of current 'write' location (mimics queue)
@@ -171,6 +180,16 @@ Returns:
 function sample(rd::ReplayDataset, sample_size::Int64)
 
   samples = Array(Exp, sample_size)
+  sample!(samples, rd)
+  return samples
+
+end  # function sample!
+
+
+# mutating version of sample()
+function sample!(samples::Vector{Exp}, rd::ReplayDataset)
+
+  sample_size = length(samples)
 
   if sample_size >= rd.valid
     ArgumentError(string("Can't draw sample of size ", sample_size, 
