@@ -1,10 +1,8 @@
-
 module Deepnets
 
 push!(LOAD_PATH, ".")
 
 using
-  Mocha,
   POMDPs,
   Const,
   ReplayDatasets,
@@ -13,35 +11,72 @@ using
 export
   Deepnet,
   select_action,
-  update_net!
+  load_minibatch!,
+  update_net!,
+  close!
+
+
+# Mocha setup
+if UseGPU
+    ENV["MOCHA_USE_CUDA"] = "true"
+else
+    ENV["MOCHA_USE_NATIVE_EXT"] = "true"
+    ENV["OMP_NUM_THREADS"] = 1
+    blas_set_num_threads(1)
+end # if
+
+using Mocha
 
 
 # wrapper around deep neural network provided by Mocha.jl
 type Deepnet
 
-  net
-  backend
+  # allocate memory for network inputs
+  beliefs::Array{Float64, 4}
+  actions::Array{Float64, 4}
+  rewards::Array{Float64, 4}
+  nextbeliefs::Array{Float64, 4}
+  isterms::Array{Float64, 4}
+  
+  net::Net
+  backend::Backend
 
-  samples::Vector{Exp}  # allocate memory for network inputs
-  delta::Vector{Float64}  # allocate memory for param change
+  # TODO: delta::???  # allocate memory for param change
 
   # TODO: add logger
 
-  function Deepnet()
+  function Deepnet(belief_length::Int64)
 
-    samples = Array(Exp, MinibatchSize)
-    delta = ???
+    beliefs = zeros(belief_length, 1, 1, MinibatchSize)
+    actions = zeros(1, 1, 1, MinibatchSize)
+    rewards = zeros(1, 1, 1, MinibatchSize)
+    nextbeliefs = zeros(belief_length, 1, 1, MinibatchSize)
+    isterms = zeros(1, 1, 1, MinibatchSize)
+
+    net = init_net(beliefs, actions, rewards, nextbeliefs, isterms)
+    backend = init_backend()
+    
+    return new(beliefs, actions, rewards, nextbeliefs, isterms, net, backend)
+
+    # TODO: delta = ???
 
   end  # function Deepnet
 
 end  # type Deepnet
 
 
-function copy!(to::Deepnet, from::Deepnet)
+# defines network architecture; separate file for organization
+include("init_net.jl")
 
 
+function init_backend()
 
-end  # function copy!
+  backend = UseGPU ? GPUBackend() : CPUBackend()
+  init(backend)
+
+  return backend
+
+end  # function init_backend
 
 
 function select_action(deepnet::Deepnet, belief::Belief)

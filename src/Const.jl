@@ -31,4 +31,7 @@ const ReplayDatasetSize = 1000  # increase to 1,000,000
 const ReplayStartSize = 50  # increase to 50,000
 const ReplayDatasetFile = "memory.jld"
 
+# misc
+UseGPU = false
+
 end  # module Const

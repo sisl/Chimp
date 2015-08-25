@@ -1,6 +1,7 @@
 module PODRLs
 
 using
+  POMDPs,
   Const,
   Deepnets,
   Expgains,
@@ -26,7 +27,7 @@ type PODRL
 
     podrl = new()
     podrl.pomdp = pomdp
-    podrl.deepnet = Deepnet()
+    podrl.deepnet = Deepnet(n_states(pomdp))
     podrl.sim = POMDPSimulator(pomdp)
     podrl.actions = actions(pomdp)
 
@@ -101,14 +102,6 @@ function update_delta!(deepnet::Deepnet, snapnet::Deepnet)
 
   grad_qlearn!(deepnet, snapnet)
   grad_rmsprop!(deepnet)
-
-end  # function grad_qlearn!
-
-
-# compute minibatch gradient using q-learning
-function grad_qlearn!(deepnet::Deepnet, snapnet::Deepnet)
-
-
 
 end  # function grad_qlearn!
 

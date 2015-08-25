@@ -1,6 +1,6 @@
 module POMDPs
 
-export 
+export
   # concrete types
   Belief,
   State,
