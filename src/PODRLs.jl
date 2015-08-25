@@ -10,7 +10,8 @@ using
 export
   PODRL,
   train!,
-  select_action
+  select_action,
+  close!
 
 
 type PODRL
@@ -23,16 +24,38 @@ type PODRL
 
   function PODRL(pomdp::POMDP)
 
-    return new(
-        pomdp,
-        Deepnet(),
-        ReplayDataset(n_states(pomdp)),
-        POMDPSimulator(pomdp),
-        actions(pomdp))
+    podrl = new()
+    podrl.pomdp = pomdp
+    podrl.deepnet = Deepnet()
+    podrl.sim = POMDPSimulator(pomdp)
+    podrl.actions = actions(pomdp)
+
+    podrl.dataset = ReplayDataset(n_states(pomdp))
+    init_dataset!(podrl)
+
+    return podrl
 
   end  # function PODRL
 
 end  # type PODRL
+
+
+function init_dataset!(podrl::PODRL)
+
+  expgain = Expgain(
+      podrl.deepnet,
+      podrl.sim,
+      podrl.replayDataset,
+      podrl.actions)
+
+  for it in 1:ReplayStartSize
+
+    exp = generate_experience!(expgain)  # must be memory-independent
+    add_experience!(podrl.dataset, exp)
+
+  end  # for it
+
+end  # function init_dataset!
 
 
 function train!(podrl::PODRL; verbose::Bool=true)
@@ -40,13 +63,13 @@ function train!(podrl::PODRL; verbose::Bool=true)
   # TODO: save snapshots every once a while
   # TODO: do stuff to verbose; incorporate logger
 
-  snapnet = Deepnet()
-
   expgain = Expgain(
       podrl.deepnet,
       podrl.sim,
       podrl.replayDataset,
       podrl.actions)
+
+  snapnet = Deepnet()
 
   for iepoch in 1:Episodes
 
@@ -55,7 +78,7 @@ function train!(podrl::PODRL; verbose::Bool=true)
 
     for it in 1:EpisodeLength
 
-      exp = generate_experience!(expgain)
+      exp = generate_experience!(expgain)  # must be memory-independent
       add_experience!(podrl.dataset, exp)
       load_minibatch!(podrl.deepnet, podrl.replayDataset)
       update_delta!(podrl.deepnet, snapnet)
@@ -67,6 +90,8 @@ function train!(podrl::PODRL; verbose::Bool=true)
 
     end  # for it
   end  # for iepoch
+
+  close!(snapnet)
 
 end  # function train!
 
@@ -101,5 +126,14 @@ function select_action(podrl::PODRL, belief::Belief)
   return select_action(podrl.deepnet, belief)
 
 end  # function select_action
+
+
+# must call this otherwise Mocha network will persist and dataset won't save
+function close!(podrl::PODRL)
+
+  close!(podrl.deepnet)
+  close!(podrl.dataset)
+
+end  # function close!
 
 end  # module PODRLs

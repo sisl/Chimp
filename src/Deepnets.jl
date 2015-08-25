@@ -20,14 +20,17 @@ export
 type Deepnet
 
   net
+  backend
+
   samples::Vector{Exp}  # allocate memory for network inputs
   delta::Vector{Float64}  # allocate memory for param change
 
   # TODO: add logger
 
-  function Deepnet(sample_size::Int64=MinibatchSize)
+  function Deepnet()
 
-    samples = Array(Exp, sample_size)
+    samples = Array(Exp, MinibatchSize)
+    delta = ???
 
   end  # function Deepnet
 
@@ -76,5 +79,14 @@ function update_params!(deepnet::Deepnet)
 
 
 end  # function update_params!
+
+
+# shuts down Mocha network
+function close!(deepnet::Deepnet)
+
+  destroy(deepnet.net)
+  shutdown(deepnet.backend)
+
+end  # function close!
 
 end  # module Deepnets
