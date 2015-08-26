@@ -47,15 +47,15 @@ end  # type POMDPSimulator
 type Exp
 
   b::Belief
-  a::Action
+  ia::ActionIndicator
   r::Reward
   bp::Belief
-  isterm::Bool  # whether sp is really terminal state
+  nonterm::Bool  # whether sp is really terminal state
 
 end  # type Exp
 
 
-function simulate!(sim::POMDPSimulator, a::Action)
+function simulate!(sim::POMDPSimulator, a::Action, aindex::Int64)
   
   r = reward(sim.pomdp, sim.s, a)
 
@@ -76,8 +76,11 @@ function simulate!(sim::POMDPSimulator, a::Action)
     reset!(sim)
   end  # if
 
+  ia = zeros(Float64, n_actions(sim.pomdp))
+  ia[aindex] = 1.0
+
   # must be memory-independent
-  return Exp(b, deepcopy(a), r, bp, isterm)
+  return Exp(b, ia, r, bp, !isterm)
 
 end  # function simulate!
 

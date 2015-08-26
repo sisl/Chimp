@@ -28,9 +28,13 @@ end  # type Expgain
 function select_action(expgain::Expgain, belief::Belief, epsilon::Float64)
 
   if rand() < epsilon
-    return expgain.actions[rand(1:length(expgain.actions))]
+    ia = rand(1:length(expgain.actions))
+    a = expgain.actions[ia]
+    return a, float64(ia)  # deepnet requires Float64 for action index
   else
-    return expgain.actions[select_action(expgain.deepnet, belief)]
+    ia = select_action(expgain.deepnet, belief)
+    a = expgain.actions[ia]
+    return a, float64(ia)  # deepnet requires Float64 for action index
   end  # if
 
 end  # function select_action
@@ -51,8 +55,8 @@ end  # function get_epsilon
 # mutates simulator in expgain to get new experience
 function generate_experience!(expgain::Expgain, iter::Int64)
 
-  a = select_action(expgain, get_epsilon(iter))
-  return simulate!(expgain.sim, a)
+  a, ia = select_action(expgain, get_epsilon(iter))
+  return simulate!(expgain.sim, a, ia)
 
 end  # function generate_experience!
 

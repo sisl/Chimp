@@ -29,13 +29,15 @@ export
 
   # standard mdp sets
   actions,
-  n_states
+  n_states,
+  n_actions
 
 
 typealias Belief Vector{Float64}
-typealias State Vector{Float64}
-typealias Observation Vector{Float64}
-typealias Action Int64
+typealias State Any
+typealias Observation Any
+typealias Action Any
+typealias ActionIndicator Vector{Float64}
 typealias Reward Float64
 
 
@@ -80,5 +82,7 @@ isterminal(pomdp::POMDP, state::State) =
 
 # standard mdp sets
 actions(pomdp::POMDP) = error("$(typeof(pomdp)) does not implement actions") 
-n_states(pomdp::POMDP) = error("$(typeof(pomdp)) does not implement n_states") 
+n_states(pomdp::POMDP) = error("$(typeof(pomdp)) does not implement n_states")
+n_actions(pomdp::POMDP) = error("$(typeof(pomdp)) does not implement n_actions")
+
 end  # module POMDPs

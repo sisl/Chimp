@@ -36,9 +36,9 @@ type ReplayDataset
   fp::HDF5File
   
   belief::HDF5Dataset
-  action::Vector{Action}
+  action::Matrix{Float64}  # indicator on action; e.g., a_1 = [1,0,...,0]
   reward::Vector{Reward}
-  isterm::Vector{Int32}  # Int32 for Bool; h5 can't use Bool
+  nonterm::Vector{Float64}  # Float64 for Bool; h5 can't use Bool
 
   rdsize::Int64
   head::Int64  # index of current 'write' location (mimics queue)
@@ -64,7 +64,7 @@ type ReplayDataset
       rdsize = size(belief)[1]
       action = read(fp["action"])
       reward = read(fp["reward"])
-      isterm = read(fp["isterm"])
+      nonterm = read(fp["nonterm"])
 
       if rdsize != ReplayDatasetSize
         @printf("[WARN] Dataset loaded from %s is of size %d, not %d as requested. Using existing size.",
@@ -76,15 +76,15 @@ type ReplayDataset
       rdsize = ReplayDatasetSize
 
       belief = d_create(fp, "belief", datatype(Float64), dataspace(rdsize, belief_length))
-      d_create(fp, "action", datatype(Int64), dataspace(rdsize, 1))  # assumes action is the actual action index
+      d_create(fp, "action", datatype(Float64), dataspace(rdsize, action_length))  # indicator on action; e.g., a_1 = [1,0,...,0]
       d_create(fp, "reward", datatype(Float64), dataspace(rdsize, 1))
-      d_create(fp, "isterm", datatype(Int32), dataspace(rdsize, 1))  # use as booleans
+      d_create(fp, "nonterm", datatype(Float64), dataspace(rdsize, 1))  # use as booleans
 
       # TODO: types don't match hdf5dataset
       
-      action = zeros(Int64, rdsize)
+      action = zeros(Float64, rdsize, action_length)
       reward = zeros(Float64, rdsize)
-      isterm = zeros(Int32, rdsize)
+      nonterm = zeros(Float64, rdsize)
 
       attrs(belief)["head"] = 1
       attrs(belief)["valid"] = 0
@@ -94,7 +94,7 @@ type ReplayDataset
     head = read(attrs(belief)["head"])
     valid = read(attrs(belief)["valid"])
 
-    return new(fp, belief, action, reward, isterm, rdsize, head, valid)
+    return new(fp, belief, action, reward, nonterm, rdsize, head, valid)
 
   end  # function ReplayDataset
 
@@ -106,7 +106,7 @@ function isvalid(f::HDF5File)
 
   dnames = names(f)
   
-  for name in ["belief", "action", "reward", "isterm"]
+  for name in ["belief", "action", "reward", "nonterm"]
     if !(name in dnames)
       return false
     end  #if
@@ -122,7 +122,7 @@ function close!(rd::ReplayDataset)
 
   rd.fp["action"] = rd.action
   rd.fp["reward"] = rd.reward
-  rd.fp["isterm"] = rd.isterm
+  rd.fp["nonterm"] = rd.nonterm
   
   attrs(rd.belief)["head"] = rd.head
   attrs(rd.belief)["valid"] = rd.valid
@@ -132,12 +132,12 @@ function close!(rd::ReplayDataset)
 end  # function close!
 
 
-#= Add the next step in a game sequence, i.e. a tuple (b, a, r, bp, isterm)
+#= Add the next step in a game sequence, i.e. a tuple (b, a, r, bp, nonterm)
 indicating that at belief |b| the agent took action |a|, received reward |r|,
-and *then* ended up in belief, |bp|. |isterm| indicates if it is a terminal
+and *then* ended up in belief, |bp|. |nonterm| indicates if it is a non-terminal
 state. The original belief is presumed to be the belief at index (head - 1).
 
-Args:
+Note:
   action:  index of the action chosen
   reward:  integer value of reward, positive or negative
   belief:  a numpy array of shape NUM_FRAMES x WIDTH x HEIGHT
@@ -145,14 +145,14 @@ Args:
 =#
 function add_experience!(rd::ReplayDataset, exp::Exp)
 
-  rd.action[rd.head] = exp.a
+  rd.action[rd.head, :] = exp.ia
   rd.reward[rd.head] = exp.r
 
-  if exp.isterm
-    rd.belief[rd.head, :] = exp.bp
-    rd.isterm[rd.head] = 1
+  if exp.nonterm
+    rd.nonterm[rd.head] = DiscountFactor  # hack: gamma for nonterminal
   else
-    rd.isterm[rd.head] = 0
+    rd.belief[rd.head, :] = exp.bp
+    rd.nonterm[rd.head] = 0.0  # hack: 0 for terminal
   end  # if
 
   # update head and valid pointer indices
@@ -162,7 +162,7 @@ function add_experience!(rd::ReplayDataset, exp::Exp)
 end  # function add_experience!
 
 
-#= Uniformly sample (b,a,r,bp) experiences from the replay dataset.
+#= Uniformly sample (b,ia,r,bp) experiences from the replay dataset.
 
 Args:
     sample_size: (self explanatory)
@@ -170,12 +170,12 @@ Args:
 Returns:
     A tuple of numpy arrays for the |sample_size| experiences 
       
-      Exp(b, a, r, bp).
+      Exp(b, ia, r, bp).
 
     The first dimension of each array corresponds to the experience
     index. The i_th experience is given by
       
-      Exp(belief[i], action[i], reward[i], next_belief[i]).
+      Exp(belief[i], action_index[i], reward[i], next_belief[i]).
 =#
 function sample(rd::ReplayDataset, sample_size::Int64)
 
@@ -218,10 +218,10 @@ function sample!(samples::Vector{Exp}, rd::ReplayDataset)
 
     samples[ibelief] = Exp(
         read(rd.belief[indices[ibelief], :]),  # b
-        rd.action[next_indices[ibelief]],  # a
+        rd.action[next_indices[ibelief]],  # ia
         rd.reward[next_indices[ibelief]],  # r
-        read(rd.belief[next_indices[ibelief], :],
-        rd.isterm[next_indices[ibelief]]))
+        read(rd.belief[next_indices[ibelief], :],  # bp
+        rd.nonterm[next_indices[ibelief]]))  # nonterm
 
   end  # for ibelief
 

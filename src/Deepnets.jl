@@ -33,40 +33,44 @@ type Deepnet
 
   # allocate memory for network inputs
   beliefs::Array{Float64, 4}
-  actions::Array{Float64, 4}
+  actions::Array{Float64, 4}  # indicator on action; e.g., a_1 = [1,0,...,0]
   rewards::Array{Float64, 4}
   nextbeliefs::Array{Float64, 4}
-  isterms::Array{Float64, 4}
+  nonterms::Array{Float64, 4}  # hack: 0 for terminal, gamma for nonterminal
   
   net::Net
   backend::Backend
+  solver::Solver
 
-  # TODO: delta::???  # allocate memory for param change
-
+  # TODO: allocate memory for param change
   # TODO: add logger
+  # TODO: see if Float32 increases efficiency without sacrificing performance
 
-  function Deepnet(belief_length::Int64)
+  function Deepnet(belief_length::Int64, action_length::Int64)
 
     beliefs = zeros(belief_length, 1, 1, MinibatchSize)
-    actions = zeros(1, 1, 1, MinibatchSize)
+    actions = zeros(action_length, 1, 1, MinibatchSize)
     rewards = zeros(1, 1, 1, MinibatchSize)
     nextbeliefs = zeros(belief_length, 1, 1, MinibatchSize)
-    isterms = zeros(1, 1, 1, MinibatchSize)
+    nonterms = zeros(1, 1, 1, MinibatchSize)
 
-    net = init_net(beliefs, actions, rewards, nextbeliefs, isterms)
     backend = init_backend()
-    
-    return new(beliefs, actions, rewards, nextbeliefs, isterms, net, backend)
+    net = init_net(beliefs, actions, rewards, nextbeliefs, nonterms, backend)
+    solver = init_solver()
 
-    # TODO: delta = ???
+    return new(
+        beliefs,
+        actions,
+        rewards,
+        nextbeliefs,
+        nonterms,
+        net,
+        backend,
+        solver)
 
   end  # function Deepnet
 
 end  # type Deepnet
-
-
-# defines network architecture; separate file for organization
-include("init_net.jl")
 
 
 function init_backend()
@@ -79,6 +83,20 @@ function init_backend()
 end  # function init_backend
 
 
+# defines network architecture; separate file for organization
+include("init_net.jl")
+
+
+function init_solver()
+
+  # TODO: figure out a way to train only half the network...
+
+  return solver
+
+end  # function init_solver
+
+
+# returns the index of the action (not actual action or indicator vector)
 function select_action(deepnet::Deepnet, belief::Belief)
 
 

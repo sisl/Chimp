@@ -27,7 +27,7 @@ type PODRL
 
     podrl = new()
     podrl.pomdp = pomdp
-    podrl.deepnet = Deepnet(n_states(pomdp))
+    podrl.deepnet = Deepnet(n_states(pomdp), n_actions(pomdp))
     podrl.sim = POMDPSimulator(pomdp)
     podrl.actions = actions(pomdp)
 
@@ -70,11 +70,8 @@ function train!(podrl::PODRL; verbose::Bool=true)
       podrl.replayDataset,
       podrl.actions)
 
-  snapnet = Deepnet()
-
   for iepoch in 1:Episodes
 
-    copy!(snapnet, podrl.deepnet)
     reset!(podrl.sim)
 
     for it in 1:EpisodeLength
@@ -82,28 +79,26 @@ function train!(podrl::PODRL; verbose::Bool=true)
       exp = generate_experience!(expgain)  # must be memory-independent
       add_experience!(podrl.dataset, exp)
       load_minibatch!(podrl.deepnet, podrl.replayDataset)
-      update_delta!(podrl.deepnet, snapnet)
+      update_delta!(podrl.deepnet)
       update!(podrl.deepnet)
       
       if it % NetUpdateFreq == 0
-        copy!(snapnet, podrl.deepnet)
+        # TODO: copy active layer params over to snap layer
       end  # if
 
     end  # for it
   end  # for iepoch
 
-  close!(snapnet)
-
 end  # function train!
 
 
-# modify deepnet.delta using rmsprop on minibatch gradient computed from snapnet
-function update_delta!(deepnet::Deepnet, snapnet::Deepnet)
+# modify deepnet.delta using rmsprop on minibatch gradient
+function update_delta!(deepnet::Deepnet)
 
-  grad_qlearn!(deepnet, snapnet)
+  # TODO: call mocha to do something with deepnet.net
   grad_rmsprop!(deepnet)
 
-end  # function grad_qlearn!
+end  # function update_delta!
 
 
 function grad_rmsprop!(deepnet::Deepnet)
