@@ -84,6 +84,7 @@ function train!(podrl::PODRL; verbose::Bool=true)
       
       if it % NetUpdateFreq == 0
         # TODO: copy active layer params over to snap layer
+        # TODO: compute targets using snapnet
       end  # if
 
     end  # for it

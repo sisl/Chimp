@@ -37,8 +37,10 @@ type Deepnet
   rewards::Array{Float64, 4}
   nextbeliefs::Array{Float64, 4}
   nonterms::Array{Float64, 4}  # hack: 0 for terminal, gamma for nonterminal
-  
-  net::Net
+  targets::Array{Float64, 4}  # computed from snapnet for each episode
+
+  actv_net::Net
+  snap_net::Net
   backend::Backend
   solver::Solver
 
@@ -46,16 +48,18 @@ type Deepnet
   # TODO: add logger
   # TODO: see if Float32 increases efficiency without sacrificing performance
 
-  function Deepnet(belief_length::Int64, action_length::Int64)
+  function Deepnet(belief_length::Int64, nactions::Int64)
 
     beliefs = zeros(belief_length, 1, 1, MinibatchSize)
-    actions = zeros(action_length, 1, 1, MinibatchSize)
+    actions = zeros(nactions, 1, 1, MinibatchSize)
     rewards = zeros(1, 1, 1, MinibatchSize)
     nextbeliefs = zeros(belief_length, 1, 1, MinibatchSize)
     nonterms = zeros(1, 1, 1, MinibatchSize)
+    targets = zeros(1, 1, 1, MinibatchSize)
 
     backend = init_backend()
-    net = init_net(beliefs, actions, rewards, nextbeliefs, nonterms, backend)
+    actv_net = init_actvnet(beliefs, actions, nactions, backend)
+    snap_net = init_snapnet(rewards, nextbeliefs, nonterms, nactions, backend)
     solver = init_solver()
 
     return new(
@@ -84,12 +88,37 @@ end  # function init_backend
 
 
 # defines network architecture; separate file for organization
-include("init_net.jl")
+include("init_actvnet.jl")
+include("init_snapnet.jl")
 
 
 function init_solver()
 
-  # TODO: figure out a way to train only half the network...
+  exp_dir = "snapshots"
+
+  solver_params = SolverParameters(
+      max_iter=1,  # because we only deal with one minibatch each time
+      regu_coef=0.0005,
+      mom_policy=MomPolicy.Fixed(0.9),
+      lr_policy=LRPolicy.Inv(0.01, 0.0001, 0.75),
+      load_from=exp_dir)
+
+  solver = SGD(solver_params)
+
+  setup_coffee_lounge(
+      solver,
+      save_into="exp_dir/statistics.hdf5",
+      every_n_iter=1)
+
+  add_coffee_break(
+      solver,
+      TrainingSummary(),
+      every_n_iter=1)
+
+  add_coffee_break(
+      solver,
+      Snapshot(exp_dir),
+      every_n_iter=1)
 
   return solver
 
@@ -107,7 +136,7 @@ end  # function select_action
 # samples from the replay dataset and writes it to mocha-visible memory
 function load_minibatch!(deepnet::Deepnet, rd::ReplayDataset)
 
-
+  # TODO: compute targets for minibatch using snapnet
 
 end  # function load_minibatch!
 
