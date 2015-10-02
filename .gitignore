@@ -1,0 +1,57 @@
+# Compiled source #
+###################
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Packages #
+############
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+ 
+# Logs and databases #
+######################
+*.log
+*.sql
+*.sqlite
+ 
+# OS generated files #
+######################
+*.DS_Store
+*.DS_Store?
+*._*
+*.Spotlight-V100
+*.Trashes
+*ehthumbs.db
+*Thumbs.db
+
+# Data files #
+##############
+*.csv
+*.jld
+*.mat
+
+# Images #
+##########
+*.jpg
+*.jpeg
+*.bitmap
+
+# Documents #
+#############
+*.eps
+*.pdf
+
+# Misc #
+########
+*.swp
+*.ipynb
