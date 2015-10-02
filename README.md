@@ -4,8 +4,8 @@ PODRL.jl ("puddle") implements a version of reinforcement learning called deep Q
 
 # Dependencies
 
-The following Julia packages are required to use PODRL.
-* [Mocha.jl](https://github.com/pluskid/Mocha.jl)
+The following Python packages are required to use PODRL.
+* [Chainer](https://github.com/pfnet/chainer)
 
 # Update
-Might remove this and port everything over to Python (using Nervana, Caffe, or Theano). Hit various roadblocks with versatility of Mocha.jl-based deep learning. These issues are especially evident in the context of the reinforcement learning algorithm, which differs significantly from a traditional supervised learning approach drawing from a static dataset.
+Might remove this and port everything over to Python (using Chainer, Nervana, Caffe, or Theano). Hit various roadblocks with versatility of Mocha.jl-based deep learning. These issues are especially evident in the context of the reinforcement learning algorithm, which differs significantly from a traditional supervised learning approach drawing from a static dataset.
