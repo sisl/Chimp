@@ -21,7 +21,7 @@ settings = { 'batch_size' : 200, # mini-batch size
     'n_epochs' : 200, # number of training epochs
     'learning_rate' : 0.001, 
     'decay_rate' : 0.99, # decay rate for RMSprop, otherwise not used
-    'discount' : 0.9, # discount rate for RL
+    'discount' : 0.99, # discount rate for RL
     'clip_err' : 0.1, # value to clip loss gradients to
     'clip_reward' : False, # value to clip reward values to
     'target_net_update' : 10000, # update the update-generating target net every fixed number of iterations
@@ -29,7 +29,7 @@ settings = { 'batch_size' : 200, # mini-batch size
     'save_every' : 1, # every # of epochs to save the net
     'save_dir' : 'models', # every # of epochs to save the net
     'double_DQN' : False, # use Double Deep Q-learning ? (CURRENTLY NOT SUPPORTED)
-    'optim_name' : 'SGD' # currently supports "RMSprop" and "SGD"'
+    'optim_name' : 'RMSprop' # currently supports "RMSprop" and "SGD"'
     }
 
 
