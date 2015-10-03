@@ -98,6 +98,7 @@ class DQN(object):
   def params(self, model):
     self.model.collect_parameters()
 
+
   # function encapsulating the training process
   def train(self, sampler):
 
