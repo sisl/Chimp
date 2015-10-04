@@ -71,11 +71,12 @@ class DQN(object):
     approx_q_value = approx_q_all.data[np.arange(approx_q_all.data.shape[0]),a]
 
     # calculate the loss
-    diff = approx_q_value - target_q_value
-    loss = np.mean(diff**2)
+    gradLoss = approx_q_value - target_q_value
+    loss = np.mean(gradLoss**2)
 
     # calculate and distribute the loss gradient (clipped)
-    gradLoss = np.clip(diff,-self.clip_err,self.clip_err)
+    if self.clip_err:
+      gradLoss = np.clip(gradLoss,-self.clip_err,self.clip_err)
     gradLossAll = np.zeros_like(approx_q_all.data)
     gradLossAll[np.arange(gradLossAll.shape[0]),a] = gradLoss
     approx_q_all.grad = gradLossAll
@@ -96,6 +97,7 @@ class DQN(object):
   # collect model parameters (coefs and grads)
   def params(self, model):
     self.model.collect_parameters()
+
 
   # function encapsulating the training process
   def train(self, sampler):
@@ -184,8 +186,8 @@ class DQN(object):
         policy_reward += np.mean(r[ind])
 
       qval_avg += np.mean(approx_q_value)
-      diff = approx_q_value - target_q_value
-      loss += np.mean(diff**2)
+      gradLoss = approx_q_value - target_q_value
+      loss += np.mean(gradLoss**2)
 
     policy_reward /= n
     qval_avg /= n

@@ -57,15 +57,16 @@ sampler = Sampler(data, settings['batch_size'])
 
 print('Setting up network...')
 # set parameters that define the network
-n_units = 128
+n_units = 100
 n_states = 5
 n_actions = 12
 
 # define the core layer structure of the network
 model = chainer.FunctionSet(l1=F.Linear(n_states, n_units),
     l2=F.Linear(n_units, n_units/2),
-    l3=F.Linear(n_units/2, n_units/2),
-    l4=F.Linear(n_units/2, n_actions))
+    l3=F.Linear(n_units/2, n_units),
+    l4=F.Linear(n_units, n_units/2),
+    l5=F.Linear(n_units/2, n_actions))
 
 # define forward pass that specifies all extra activation functions and how the net produces output
 # on the way, the network also memorizes how to run the backward pass through all the layers
@@ -73,8 +74,9 @@ model = chainer.FunctionSet(l1=F.Linear(n_states, n_units),
 def forward(model, s):
     h1 = F.relu(model.l1(s))
     h2 = F.relu(model.l2(h1))
-    h3 = F.relu(model.l3(h2))
-    output = model.l4(h3)
+    h3 = F.relu(model.l3(h2))    
+    h4 = F.relu(model.l4(h3))
+    output = model.l5(h4)
     return output
 
 # form a DQN object that will handle the training
