@@ -116,6 +116,10 @@ class TigerPOMDP():
         oidx = self.categorical(d)
         return self.tobs[oidx]
 
+    # pdf should be in a distributions module
+    def pdf(self, d, dval):
+        return d[dval]
+
     # numpy categorical sampling hack
     def categorical(self, d):
         return np.flatnonzero( np.random.multinomial(1,d,1) )[0]
