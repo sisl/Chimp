@@ -1,5 +1,9 @@
 import numpy as np
+import random
 from copy import deepcopy
+import sys
+sys.path.append("../tools/")
+from belief import DiscreteBelief
 
 #################################################################
 # Implements the Tiger POMDP problem
@@ -75,19 +79,19 @@ class TigerPOMDP():
     # Distribution Functions
     ################################################################# 
     # returns the transtion distriubtion of s' from the (s,a) pair
-    def transition(self, s, a, d = None):
-        if d == None:
-            d = self.create_transition_distribution()
+    def transition(self, s, a, dist = None):
+        if dist == None:
+            dist = self.create_transition_distribution()
         if a == 0 or a == 1:
-            d[0] = 0.5
-            d[1] = 0.5
+            dist[0] = 0.5
+            dist[1] = 0.5
         elif s == 0:
-            d[0] = 1.0 
-            d[1] = 0.0
+            dist[0] = 1.0 
+            dist[1] = 0.0
         else:
-            d[0] = 0.0
-            d[1] = 1.0
-        return d
+            dist[0] = 0.0
+            dist[1] = 1.0
+        return dist
 
     # sample the transtion distribution 
     def sample_state(self, d):
@@ -95,21 +99,21 @@ class TigerPOMDP():
         return self.tstates[sidx]
 
     # returns the observation dsitribution of o from the (s,a) pair
-    def observation(self, s, a, d = None):
-        if d == None:
-            d = self.create_observation_distribution()
+    def observation(self, s, a, dist = None):
+        if dist == None:
+            dist = self.create_observation_distribution()
         p = self.pcorrect
         if a == 2:
             if s == 0:
-                d[0] = p
-                d[1] = 1.0 - p
+                dist[0] = p
+                dist[1] = 1.0 - p
             else:
-                d[0] = 1.0 - p
-                d[1] = p
+                dist[0] = 1.0 - p
+                dist[1] = p
         else:
-            d[0] = 0.5
-            d[1] = 0.5
-        return d
+            dist[0] = 0.5
+            dist[1] = 0.5
+        return dist
 
     # sample the observation distirbution
     def sample_observation(self, d):
@@ -137,16 +141,22 @@ class TigerPOMDP():
         return od
 
     def create_belief(self):
-        bd = np.array([0.5, 0.5])
-        return bd
+        return DiscreteBelief(self.n_states())
 
     def initial_belief(self):
-        bd = np.array([0.5, 0.5])
-        return bd
+        return DiscreteBelief(self.n_states())
+
+    def initial_state(self):
+        return random.randint(0,1)
 
     ################################################################# 
     # Misc Functions
     ################################################################# 
+
+    def isterminal(self, s):
+        # no terminal state in model
+        return False
+
     def n_states(self):
         return 2
 
@@ -155,4 +165,19 @@ class TigerPOMDP():
 
     def n_obsevations(self):
         return 2
+
+    ################################################################# 
+    # Policies
+    ################################################################# 
+
+    def optimal_policy(self):
+        def pol(b):
+            if b[0] < 0.04:
+                return 0
+            elif b[0] > 0.96:
+                return 1
+            else:
+                return 2
+        return pol
+
 

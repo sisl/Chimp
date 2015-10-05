@@ -34,7 +34,7 @@ class DiscreteBelief():
 
         for (i, sp) in enumerate(sspace):
             # get the distributions
-            od = pomdp.observation(sp, a, od)
+            od = pomdp.observation(sp, a, dist = od)
             # get the prob of o from the current distribution
             probo = pomdp.pdf(od, o)
             # if observation prob is 0.0, then skip rest of update b/c bnew[i] is zero
@@ -42,13 +42,11 @@ class DiscreteBelief():
                 continue
             b_sum = 0.0 # belef for state sp
             for (j, s) in enumerate(sspace):
-                td = pomdp.transition(s, a, td)
+                td = pomdp.transition(s, a, dist = td)
                 pp = pomdp.pdf(td, sp)
                 b_sum += pp * bold[j]
-                print i, j, pp, bold[j]
             bnew[i] = probo * b_sum
         norm = sum(bnew)
-        print norm
         for i in range(self.length()):
             bnew[i] /= norm
         (self.bnew, self.bold) = (bnew, bold)
