@@ -118,6 +118,7 @@ class TigerPOMDP():
 
     # pdf should be in a distributions module
     def pdf(self, d, dval):
+        assert dval < 2, "Attempting to retrive pdf value larger than state size"
         return d[dval]
 
     # numpy categorical sampling hack
@@ -138,3 +139,16 @@ class TigerPOMDP():
     def create_belief(self):
         bd = np.array([0.5, 0.5])
         return bd
+
+    ################################################################# 
+    # Misc Functions
+    ################################################################# 
+    def n_states(self):
+        return 2
+
+    def n_actions(self):
+        return 3
+
+    def n_obsevations(self):
+        return 2
+
