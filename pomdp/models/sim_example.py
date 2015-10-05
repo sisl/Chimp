@@ -9,8 +9,7 @@ pomdp = TigerPOMDP()
 # optimal policy for tiger
 policy = pomdp.optimal_policy()
 
-# initialized to unifrom
-b = DiscreteBelief(pomdp.n_states())
+# length of sim
 ts = 100
 
 # pointers to pre-allocated distributions
