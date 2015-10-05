@@ -29,8 +29,8 @@ settings = { 'batch_size' : 200, # mini-batch size
     'print_every' : 5000, # print out update every 5000 iterations
     'save_every' : 1, # every number of epochs that we save the net
     'save_dir' : 'models', # directory where we save the net
-    'double_DQN' : False, # use Double DQN (based on Deep Mind paper)
-    'optim_name' : 'RMSprop' # currently supports "RMSprop" and "SGD"'
+    'double_DQN' : True, # use Double DQN (based on Deep Mind paper)
+    'optim_name' : 'RMSprop' # currently supports "RMSprop", "ADADELTA" and "SGD"'
     }
 print(settings)
 

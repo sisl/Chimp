@@ -34,6 +34,9 @@ class DQN(object):
     # setting up various possible gradient update algorithms
     if settings['optim_name'] == 'RMSprop':
       self.optimizer = optimizers.RMSprop(lr=self.learning_rate, alpha=self.decay_rate)
+    elif settings['optim_name'] == 'ADADELTA':
+      print("Supplied learning rate not used with ADADELTA gradient update method")
+      self.optimizer = optimizers.AdaDelta()
     elif settings['optim_name'] == 'SGD':
       self.optimizer = optimizers.SGD(lr=self.learning_rate)
     else:
@@ -97,7 +100,7 @@ class DQN(object):
 
   # extract the optimal policy in the given state
   def policy(self, s):
-    s = chainer.Variable(s)
+    s = chainer.Variable(s, volatile = True)
     approx_q_all = self.forward(self.model, s)
     opt_a = np.argmax(approx_q_all.data,1)
     return opt_a
@@ -178,7 +181,7 @@ class DQN(object):
       #if self.clip_reward:
       #  r = np.clip(r,-self.clip_reward,self.clip_reward)
 
-      s0, s1 = chainer.Variable(s0), chainer.Variable(s1)
+      s0, s1 = chainer.Variable(s0, volatile=True), chainer.Variable(s1, volatile=True)
       
       if not self.double_DQN:
         target_q_all = self.forward(self.target_model, s1)
