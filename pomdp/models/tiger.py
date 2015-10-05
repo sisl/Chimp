@@ -140,6 +140,10 @@ class TigerPOMDP():
         bd = np.array([0.5, 0.5])
         return bd
 
+    def initial_belief(self):
+        bd = np.array([0.5, 0.5])
+        return bd
+
     ################################################################# 
     # Misc Functions
     ################################################################# 
