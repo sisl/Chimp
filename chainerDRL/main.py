@@ -14,6 +14,7 @@ from DQNs import DQN
 
 # Initialize random seed for reproducibility
 np.random.seed(1234)
+random.seed(1234)
 
 print('Setting training parameters...')
 # Set training settings
@@ -22,15 +23,16 @@ settings = { 'batch_size' : 200, # mini-batch size
     'learning_rate' : 0.001, 
     'decay_rate' : 0.99, # decay rate for RMSprop, otherwise not used
     'discount' : 0.99, # discount rate for RL
-    'clip_err' : 0.1, # value to clip loss gradients to
+    'clip_err' : 1, # value to clip loss gradients to
     'clip_reward' : False, # value to clip reward values to
     'target_net_update' : 10000, # update the update-generating target net every fixed number of iterations
     'print_every' : 5000, # print out update every 5000 iterations
-    'save_every' : 1, # every # of epochs to save the net
-    'save_dir' : 'models', # every # of epochs to save the net
-    'double_DQN' : False, # use Double Deep Q-learning ? (CURRENTLY NOT SUPPORTED)
-    'optim_name' : 'RMSprop' # currently supports "RMSprop" and "SGD"'
+    'save_every' : 1, # every number of epochs that we save the net
+    'save_dir' : 'models', # directory where we save the net
+    'double_DQN' : True, # use Double DQN (based on Deep Mind paper)
+    'optim_name' : 'RMSprop' # currently supports "RMSprop", "ADADELTA" and "SGD"'
     }
+print(settings)
 
 
 print('Loading data...')
@@ -62,11 +64,11 @@ n_states = 5
 n_actions = 12
 
 # define the core layer structure of the network
-model = chainer.FunctionSet(l1=F.Linear(n_states, n_units),
-    l2=F.Linear(n_units, n_units/2),
-    l3=F.Linear(n_units/2, n_units),
-    l4=F.Linear(n_units, n_units/2),
-    l5=F.Linear(n_units/2, n_actions))
+model = chainer.FunctionSet(l1=F.Linear(n_states, n_units,wscale = np.sqrt(2)),
+    l2=F.Linear(n_units, n_units/2,wscale = np.sqrt(2)),
+    l3=F.Linear(n_units/2, n_units,wscale = np.sqrt(2)),
+    l4=F.Linear(n_units, n_units/2,wscale = np.sqrt(2)),
+    l5=F.Linear(n_units/2, n_actions,wscale = np.sqrt(2)))
 
 # define forward pass that specifies all extra activation functions and how the net produces output
 # on the way, the network also memorizes how to run the backward pass through all the layers

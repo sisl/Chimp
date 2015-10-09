@@ -6,6 +6,7 @@ from chainer import optimizers
 from sample import Sampler
 from copy import deepcopy
 import math
+import random
 
 import pickle # used to save the nets
 
@@ -13,8 +14,8 @@ class DQN(object):
 
   def __init__(self, model, forward, settings):
     self.model = model
-    self.target_model = deepcopy(model)
     self.forward = forward
+    self.target_model = deepcopy(model)
 
     self.batch_size = settings['batch_size']
     self.n_epochs = settings['n_epochs']
@@ -27,13 +28,15 @@ class DQN(object):
     self.target_net_update = settings['target_net_update']
     self.print_every = settings['print_every']
     self.save_every = settings['save_every']
-    self.double_DQN = settings['double_DQN']
-
     self.save_dir = settings['save_dir']
+    self.double_DQN = settings['double_DQN']
 
     # setting up various possible gradient update algorithms
     if settings['optim_name'] == 'RMSprop':
       self.optimizer = optimizers.RMSprop(lr=self.learning_rate, alpha=self.decay_rate)
+    elif settings['optim_name'] == 'ADADELTA':
+      print("Supplied learning rate not used with ADADELTA gradient update method")
+      self.optimizer = optimizers.AdaDelta()
     elif settings['optim_name'] == 'SGD':
       self.optimizer = optimizers.SGD(lr=self.learning_rate)
     else:
@@ -50,8 +53,6 @@ class DQN(object):
 
   # sampling of one mini-batch and one update using it
   def iteration(self, sampler):
-    # resets gradient storage to zero
-    self.optimizer.zero_grads()
 
     # load data
     s0, a, r, s1 = sampler.minibatch('train')
@@ -59,16 +60,26 @@ class DQN(object):
     if self.clip_reward:
       r = np.clip(r,-self.clip_reward,self.clip_reward)
 
-    s0, s1 = chainer.Variable(s0), chainer.Variable(s1)
+    s0, s1 = chainer.Variable(s0), chainer.Variable(s1, volatile = True)
 
     # calculate target Q-values (from s1 and on)
-    target_q_all = self.forward(self.target_model, s1)
-    target_q_max = np.max(target_q_all.data, 1)
+    if not self.double_DQN:
+      target_q_all = self.forward(self.target_model, s1)
+      target_q_max = np.max(target_q_all.data, 1)
+    else:
+      target_q_all = self.forward(self.model, s1)
+      target_argmax = np.argmax(target_q_all.data, 1)
+      target_q_all = self.forward(self.target_model, s1)
+      target_q_max = target_q_all.data[np.arange(target_q_all.data.shape[0]),target_argmax]
+      
     target_q_value = r + self.discount * target_q_max
 
     # calculate expected Q-values for the actions we actually took
     approx_q_all = self.forward(self.model, s0)
     approx_q_value = approx_q_all.data[np.arange(approx_q_all.data.shape[0]),a]
+
+    # resets gradient storage to zero
+    self.optimizer.zero_grads()
 
     # calculate the loss
     gradLoss = approx_q_value - target_q_value
@@ -89,7 +100,7 @@ class DQN(object):
 
   # extract the optimal policy in the given state
   def policy(self, s):
-    s = chainer.Variable(s)
+    s = chainer.Variable(s, volatile = True)
     approx_q_all = self.forward(self.model, s)
     opt_a = np.argmax(approx_q_all.data,1)
     return opt_a
@@ -123,7 +134,7 @@ class DQN(object):
 
       # copy the updated net onto the target generating net
       if i % self.target_net_update == 0:
-        self.target_model = deepcopy(self.model)
+          self.target_model = deepcopy(self.model)
 
       # print overview metrics every fixed number of iterations
       if i % self.print_every == 0:   
@@ -170,10 +181,17 @@ class DQN(object):
       #if self.clip_reward:
       #  r = np.clip(r,-self.clip_reward,self.clip_reward)
 
-      s0, s1 = chainer.Variable(s0), chainer.Variable(s1)
+      s0, s1 = chainer.Variable(s0, volatile=True), chainer.Variable(s1, volatile=True)
       
-      target_q_all = self.forward(self.target_model, s1)
-      target_q_max = np.max(target_q_all.data, 1)
+      if not self.double_DQN:
+        target_q_all = self.forward(self.target_model, s1)
+        target_q_max = np.max(target_q_all.data, 1)
+      else:
+        target_q_all = self.forward(self.model, s1)
+        target_argmax = np.argmax(target_q_all.data, 1)
+        target_q_all = self.forward(self.target_model, s1)
+        target_q_max = target_q_all.data[np.arange(target_q_all.data.shape[0]),target_argmax]
+      
       target_q_value = r + self.discount * target_q_max
 
       approx_q_all = self.forward(self.model, s0)
