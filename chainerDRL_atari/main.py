@@ -22,10 +22,10 @@ settings = {
     'batch_size' : 32, # mini-batch size
     'print_every' : 1000, # print out update every 5000 iterations
     'save_dir' : 'nets', # directory where we save the net
-	'eval_every' : 10,
-	'eval_episodes' : 5,
-	'save_every' : 100,
-	'n_episodes' : 10000,
+    'eval_every' : 10,
+    'eval_episodes' : 5,
+    'save_every' : 100,
+    'n_episodes' : 10000,
 
     # Atari simulator settings
     'epsilon' : 1.0,  # Initial exploratoin rate
