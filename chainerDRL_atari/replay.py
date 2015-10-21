@@ -15,12 +15,13 @@ class ReplayMemory(object):
                   np.zeros(self.memory_size, dtype=np.bool)]
     self.counter = 0
 
-  # function to sample a mini-batch from the desired data 'split' (train,val,test)
+  # function to sample a mini-batch
   def minibatch(self, batch_size):
     # sampling a mini-batch of the given size with replacement
     ind = np.random.randint(0,min(self.counter,self.memory_size),batch_size)
     return self.data[0][ind], self.data[1][ind], self.data[2][ind], self.data[3][ind], self.data[4][ind]
 
+  # function to store the observed experience and keep the count within the replay memory
   def storeTuple(self, s0, a, r, s1, episode_end_flag = False):
 
         # while still space in the memory, put the new observation into the next empty spot
@@ -38,6 +39,6 @@ class ReplayMemory(object):
           self.data[3][ind] = s1
 
         self.data[4][ind] = episode_end_flag
-
+        
         self.counter += 1
 
