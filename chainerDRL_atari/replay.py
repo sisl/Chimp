@@ -1,10 +1,6 @@
 import numpy as np
 
-# object to load (s0,a,r,s1) marketing data - to verify the system works
-# THIS WILL BE REPLACED WITH ReplayMemory REPLAY MODULE
-
-# NOTE: WE NEED TO COME UP WITH A CONSISTENT NOTION OF A TRAINING EPOCH
-# FOR OUR PURPOSES
+# object to store (s0,a,r,s1) data
 
 class ReplayMemory(object):
 
@@ -27,8 +23,10 @@ class ReplayMemory(object):
 
   def storeTuple(self, s0, a, r, s1, episode_end_flag = False):
 
+        # while still space in the memory, put the new observation into the next empty spot
         if self.counter < self.memory_size:
           ind = self.counter
+        # when the replay memory has been filed, choose a random stored observation and replace it
         else:
           ind = np.random.randint(0,self.memory_size)
 
