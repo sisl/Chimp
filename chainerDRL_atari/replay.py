@@ -8,11 +8,12 @@ class ReplayMemory(object):
         self.memory_size = settings['memory_size']
         self.screen_dims_new = settings['screen_dims_new']
         self.n_frames = settings['n_frames']
-        self.data = [np.zeros((self.memory_size, self.n_frames, self.screen_dims_new[0], self.screen_dims_new[1]), dtype=np.float32),
-            np.zeros(self.memory_size, dtype=np.int32),
-            np.zeros(self.memory_size, dtype=np.float32),
-            np.zeros((self.memory_size, self.n_frames, self.screen_dims_new[0], self.screen_dims_new[1]), dtype=np.float32),
-            np.zeros(self.memory_size, dtype=np.bool)]
+        self.data = [
+            np.zeros((self.memory_size, self.n_frames, self.screen_dims_new[0], self.screen_dims_new[1]), dtype=np.float32),  # state
+            np.zeros(self.memory_size, dtype=np.int32),  # action
+            np.zeros(self.memory_size, dtype=np.float32),  # reward
+            np.zeros((self.memory_size, self.n_frames, self.screen_dims_new[0], self.screen_dims_new[1]), dtype=np.float32),  # next state
+            np.zeros(self.memory_size, dtype=np.bool)]  # end of episode
         self.counter = 0
 
     # function to sample a mini-batch
@@ -39,5 +40,5 @@ class ReplayMemory(object):
             self.data[3][ind] = s1
 
         self.data[4][ind] = episode_end_flag
-        
+
         self.counter += 1
