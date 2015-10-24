@@ -1,18 +1,16 @@
+'''
+Agent framework.
+It is set up with the settings,
+manipulates learner, replay memory and the simulator to do training and evaluation, 
+record, visualize and save results.
+'''
+
 import os
 import numpy as np
-import scipy.misc as spm
-import chainer
-import chainer.functions as F
-from chainer import optimizers
 from copy import deepcopy
-import math
-import random
-
+import pickle
 import pygame
-
-from ale_python_interface import ALEInterface
-
-import pickle # used to save the nets
+import matplotlib.pyplot as plt
 
 class Agent(object):
 
@@ -21,8 +19,6 @@ class Agent(object):
         self.batch_size = settings['batch_size']
         self.n_episodes = settings['n_episodes']
         self.n_frames = settings['n_frames']
-        self.actions = settings['actions']
-        self.n_actions = self.actions.size
         self.epsilon = settings['epsilon']
         self.initial_exploration = settings['initial_exploration']
         self.eval_every = settings['eval_every']
@@ -32,14 +28,8 @@ class Agent(object):
         self.save_dir = settings['save_dir']
         self.save_every = settings['save_every']
 
-        self.screen_dims = settings['screen_dims']
-        self.screen_dims_new = settings['screen_dims_new']
-        self.display_dims = settings['display_dims']
-        self.pad = settings['pad']
-        self.screen_data = np.zeros(self.screen_dims[0]*self.screen_dims[1],dtype=np.uint32)
-        self.state = np.zeros((1,self.n_frames, self.screen_dims_new[0], self.screen_dims_new[1]), dtype=np.float32)
-
         self.viz = settings['viz']
+        self.display_dims = settings['display_dims']
 
     # helper function to save net (or any object)
     def save(self,obj,name):
@@ -50,39 +40,30 @@ class Agent(object):
         return pickle.load(open(name, "rb"))
 
     # masking function for learner policy - for e-greedy simulator action selection
-    def policy(self, learner, s, epsilon = 0):
+    def policy(self, learner, simulator, s, epsilon = 0):
         if np.random.rand() < epsilon:
-            opt_a = np.random.randint(0, self.n_actions)
+            opt_a = np.random.randint(0, simulator.n_actions)
         else:
             opt_a = learner.policy(s)
         return opt_a
 
-    # get cropped screen image
-    def get_screen(self, ale):
-        ale.getScreenRGB(self.screen_data)
-        if self.viz:
-            self.screen.blit(pygame.transform.scale2x(self.game_surface),(0,0))
-            pygame.display.flip()
-        tmp = np.bitwise_and(self.screen_data.reshape([self.screen_dims[0], self.screen_dims[1]]), 0b0001111)  # Get Intensity from the observation
-        # frame = (spm.imresize(tmp, (84, 110)))[:, 110-84-8:110-8]  # Scaling
-        frame = (spm.imresize(tmp[:, self.screen_dims[1]-self.screen_dims[0]-self.pad:self.screen_dims[1]-self.pad], 
-            (self.screen_dims_new[0], self.screen_dims_new[1])))  # Scaling
-        # frame = (spm.imresize(tmp[:, 210-160-15:210-15], (84, 84)))
-        return frame
-
     # get state
-    def update_state(self, ale):
-        frame = self.get_screen(ale)
+    def get_state(self, simulator):
+        # get screenshot
+        self.frame = simulator.get_screenshot()
+
+        # add screenshot to the state to the 
         ind = [i+1 for i in range(self.n_frames - 1)]
-        temp = []
+        tmp = []
         for i in ind:
-            temp.append(self.state[0][i])
-        temp.append(frame)
-        self.state = np.asanyarray(temp, dtype=np.float32).reshape(1, self.n_frames, self.screen_dims_new[0], self.screen_dims_new[1])
+            tmp.append(self.state[0][i])
+        tmp.append(self.frame)
+        self.state = np.asanyarray(tmp, dtype=np.float32).reshape(1, self.n_frames, 
+            simulator.screen_dims_new[0], simulator.screen_dims_new[1])
         return self.state.copy()
 
     # launch training process
-    def train(self, learner, memory, ale):
+    def train(self, learner, memory, simulator):
 
         # create "nets" directory to save training output
         if not os.path.exists(self.save_dir):
@@ -99,19 +80,19 @@ class Agent(object):
         total_loss = 0
         total_qval_avg = 0
 
-        print("Running initial exploration for " + str(self.initial_exploration) + " screen transitions...")
-
         if self.viz:
+            # initialize pygame screen
             pygame.init()
-            self.screen = pygame.display.set_mode((self.display_dims[0],self.display_dims[1]))
-            pygame.display.set_caption("Arcade Learning Environment Random Agent Display")
+            self.screen = pygame.display.set_mode(self.display_dims)
 
-            self.game_surface = pygame.Surface((self.screen_dims[0],self.screen_dims[1]))
-            self.screen_data = np.frombuffer(self.game_surface.get_buffer(),dtype=np.uint32)
+            if simulator.title:
+                pygame.display.set_caption(simulator.title)
+
+        print("Running initial exploration for " + str(self.initial_exploration) + " screen transitions...")
 
         while memory.episode_counter < self.n_episodes:
 
-            episode_reward, loss, qval_avg, transition_counter = self.episode(learner,memory,ale,True)
+            episode_reward, loss, qval_avg, transition_counter = self.episode(learner,memory,simulator,True)
             total_reward += episode_reward
             total_loss += loss
             total_qval_avg += qval_avg
@@ -140,7 +121,8 @@ class Agent(object):
                 self.save(learner.net,'./%s/net_%d.p' % (self.save_dir,int(memory.counter/memory.memory_size)))
 
                 for i in range(self.eval_episodes):
-                    episode_reward, loss, qval_avg, transition_counter = self.episode(learner,memory,ale,False)
+
+                    episode_reward, loss, qval_avg, transition_counter = self.episode(learner,memory,simulator,False)
                     total_reward += episode_reward
                     total_loss += loss
                     total_qval_avg += qval_avg
@@ -165,11 +147,11 @@ class Agent(object):
                 total_transition = 0
                 local_counter = 0
 
-        self.save(learner,'./%s/DQN_final.p' % self.save_dir)
+        #self.save(learner,'./%s/DQN_final.p' % self.save_dir)
 
 
     # play one game, in training or evaluation mode
-    def episode(self, learner, memory, ale, train=True):
+    def episode(self, learner, memory, simulator, train=True):
 
         episode_reward = 0
         approx_q_all = 0 
@@ -178,10 +160,11 @@ class Agent(object):
 
         transition_counter = 0
 
-        self.state = np.zeros((1, self.n_frames, self.screen_dims_new[0], self.screen_dims_new[1]), dtype=np.float32)
-        self.s0 = self.update_state(ale)
+        # setting initial state that will last trough one episode
+        self.state = np.zeros((1, self.n_frames, simulator.screen_dims_new[0], simulator.screen_dims_new[1]), dtype=np.float32)
+        self.s0 = self.get_state(simulator)
 
-        while not ale.game_over():
+        while not simulator.episode_over():
 
             transition_counter += 1
 
@@ -194,50 +177,67 @@ class Agent(object):
             # INTERACTING WITH THE SIMULATOR AND STORING THE EXPERIENCE
             # getting observation and forming the state
             if train and memory.counter < self.initial_exploration:
-                self.a = np.random.randint(self.n_actions)
+                self.a = np.random.randint(simulator.n_actions)
             elif train and memory.counter >= self.initial_exploration:
-                self.a = self.policy(learner, self.s0, epsilon = self.epsilon)
+                self.a = self.policy(learner, simulator, self.s0, epsilon = self.epsilon)
             else:
-                self.a = self.policy(learner, self.s0, epsilon = 0)
+                self.a = self.policy(learner, simulator, self.s0, epsilon = 0.1)
 
-            self.reward = float(ale.act(self.actions[self.a]));
+            self.reward = float(simulator.act(self.a));
             episode_reward += self.reward;
 
-            self.s1 = self.update_state(ale)
+            self.s1 = self.get_state(simulator)
+
+            # move the image to the screen
+            if self.viz:
+                self.surface = pygame.surfarray.make_surface(self.frame)
+                self.screen.blit(pygame.transform.scale2x(self.surface),(0,0))
+                pygame.display.flip()
 
             if train:
 
                 # storing only tuples observed during training
-                memory.storeTuple(self.s0,self.a,self.reward,self.s1,ale.game_over())
+                memory.store_tuple(self.s0,self.a,self.reward,self.s1,simulator.episode_over())
 
                 if memory.counter >= self.initial_exploration:
                     
+                    # sample a minibatch
                     self.s0_l,self.a_l,self.reward_l,self.s1_l,self.end_l = memory.minibatch(self.batch_size)
-                    batch_approx_q_all, batch_loss, batch_qval_avg = learner.gradUpdate(self.s0_l,self.a_l,self.reward_l,self.s1_l,self.end_l) # run an update iteration on one mini-batch
+
+                    # run an update iteration on one mini-batch
+                    batch_approx_q_all, batch_loss, batch_qval_avg = learner.gradUpdate(
+                        self.s0_l,self.a_l,self.reward_l,self.s1_l,self.end_l)
+
                     loss += batch_loss
                     qval_avg += batch_qval_avg
 
+                    # copy a net every fixed number of steps
                     if memory.counter % learner.target_net_update == 0:
                         learner.target_net = deepcopy(learner.net)
 
+                    # discount the randomization constant
                     self.epsilon -= 1.0/10**6
                     if self.epsilon < 0.1:
                         self.epsilon = 0.1
 
-            else:
+            else: # evaluation
 
-                batch_approx_q_all, batch_loss, batch_qval_avg = learner.forwardLoss(self.s0,self.a,self.reward,self.s1,ale.game_over())
+                # calculate loss and other metrics on the observed tuple
+                batch_approx_q_all, batch_loss, batch_qval_avg = learner.forwardLoss(
+                    self.s0,self.a,self.reward,self.s1,simulator.episode_over())
                 loss += batch_loss
                 qval_avg += batch_qval_avg
 
-            self.s0 = self.s1.copy() # s1 now is s0 during next turn
+            self.s0 = self.s1 # s1 now is s0 during next turn
 
+            # exit training if one closes a screen
             if self.viz:
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         exit()
 
-        ale.reset_game()
+        # restart episode
+        simulator.reset_episode()
 
         loss /= transition_counter
         qval_avg /= transition_counter

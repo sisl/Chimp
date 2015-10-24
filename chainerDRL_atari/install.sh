@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# sudo chown -R $USER /usr/local/
+
 pip install --upgrade pip
 
 brew install numpy
@@ -7,6 +9,7 @@ pip install scipy
 pip install chainer
 
 pip install pillow
+pip install -U six
 
 
 # cd external/SDL2-2.0.3
@@ -36,4 +39,16 @@ pip install --user .
 cd ..
 
 
+git clone https://github.com/inducer/pycuda pycuda
+cd pycuda
+python configure.py --cuda-root=/usr/local/cuda/
+# may need to edit path from lib64 to lib
+# sudo install_name_tool -change @rpath/CUDA.framework/Versions/A/CUDA \
+#    /Library/Frameworks/CUDA.framework/CUDA \
+#    /usr/local/cuda/lib/libcuda.dylib
+sudo make install
+cd ..
+
+pip install chainer-cuda-deps
+# refer to here http://www.slideshare.net/beam2d/introduction-to-chainer-a-flexible-framework-for-deep-learning
 

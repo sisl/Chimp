@@ -1,19 +1,21 @@
-import argparse
+'''
+File to initialize training.
+Contains settings, network definition for Chainer.
+Creates the simulator, replay memory, DQN learner, and passes these to the agent framework for training.
+'''
+
 import numpy as np
 import random
-import math
-from copy import deepcopy
-import scipy.misc as spm
 
 import chainer
 import chainer.functions as F
-from chainer import optimizers
 
-from ale_python_interface import ALEInterface
-
-from replay import ReplayMemory
+from memories import ReplayMemoryHDF5
+from memories import ReplayMemory
 from learners import Learner
 from agents import Agent
+from simulators import Atari
+
 
 print('Setting training parameters...')
 # Set training settings
@@ -32,11 +34,10 @@ settings = {
     'initial_exploration' : 10000,
     'frame_skip' : 4,
     'viz' : True,
-    #'rom' : "./roms/breakout.bin",
-    'rom' : "./roms/boxing.bin",
-    'screen_dims_new' : (84,84),
-    'display_dims' : (320,420),
-    'pad' : 15,
+    'rom' : "./roms/breakout.bin",
+    'screen_dims_new' : (84,84), # size to which the image shall be cropped
+    'display_dims' : (170,170), # size of the pygame display
+    'pad' : 15, # padding parameter - for image cropping - only along the length of the image, to obtain a square
 
     # replay memory settings
     'memory_size' : 100000,  # size of replay memory
@@ -49,11 +50,13 @@ settings = {
     'clip_err' : False, # value to clip loss gradients to
     'clip_reward' : False, # value to clip reward values to
     'target_net_update' : 10000, # update the update-generating target net every fixed number of iterations
-    'double_DQN' : True, # use Double DQN (based on Deep Mind paper)
+    'double_DQN' : False, # use Double DQN (based on Deep Mind paper)
     'optim_name' : 'RMSprop', # currently supports "RMSprop", "ADADELTA" and "SGD"'
+    'cuda' : False,
 
     # general
     'seed' : 1234
+
     }
 
 print(settings)
@@ -67,26 +70,15 @@ random.seed(settings["seed"])
 
 print('Firing up Atari...')
 
-ale = ALEInterface()
-
-ale.setInt("frame_skip",settings["frame_skip"])
-ale.setInt("random_seed",settings["seed"])
-ale.loadROM(settings["rom"])
-
-settings['actions'] = ale.getLegalActionSet() #Minimal
-settings['n_actions'] = settings['actions'].size
-settings['screen_dims'] = ale.getScreenDims()
-
-print("Original screen width/height: " +str(settings['screen_dims'][0]) + "/" + str(settings['screen_dims'][1]))
-print("Modified screen width/height: " +str(settings['screen_dims_new'][0]) + "/" + str(settings['screen_dims_new'][1]))
+ale = Atari(settings)
 
 # SETTING UP THE REPLAY MEMORY
-
+ 
 print('Initializing replay memory...')
 
 # Generate sampler object to sample mini-batches
+# memory = ReplayMemoryHDF5(settings)
 memory = ReplayMemory(settings)
-
 
 # SETTING UP THE LEARNER
 # Define the network to be used by the learner
@@ -100,7 +92,7 @@ net = chainer.FunctionSet(
     l2=F.Convolution2D(32, 64, ksize=4, stride=2, nobias=False, wscale=np.sqrt(2)),
     l3=F.Convolution2D(64, 64, ksize=3, stride=1, nobias=False, wscale=np.sqrt(2)),
     l4=F.Linear(3136, 512, wscale=np.sqrt(2)),
-    l5=F.Linear(512, settings['n_actions'], wscale = np.sqrt(2))
+    l5=F.Linear(512, ale.n_actions, wscale = np.sqrt(2))
     )
 
 # Define forward pass that specifies all extra activation functions and how the net produces output
@@ -127,4 +119,3 @@ agent = Agent(settings)
 print('Training...')
 # starting training
 agent.train(learner, memory, ale)
-

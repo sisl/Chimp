@@ -1,3 +1,9 @@
+'''
+(Double) Deep Q-Learning Algorithm Implementation
+ToDo: GPU Support
+
+'''
+
 import os
 import numpy as np
 import chainer
@@ -24,6 +30,8 @@ class Learner(object):
         self.clip_reward = settings['clip_reward']
         self.target_net_update = settings['target_net_update']
         self.double_DQN = settings['double_DQN']
+
+        self.cuda = settings['cuda']
 
         # setting up various possible gradient update algorithms
         if settings['optim_name'] == 'RMSprop':
@@ -55,11 +63,14 @@ class Learner(object):
 
         # reset gradient storage to zero
         self.optimizer.zero_grads()
+
         # move forward through the net and produce output variable 
         # containing the loss gradient + MSE loss + average Q-value for taken actions
         approx_q_all, loss, qval_avg = self.forwardLoss(s0, a, r, s1, episode_end_flag)
+
         # propagate the loss gradient through the net
         approx_q_all.backward()
+
         # carry out parameter updates based on the distributed gradients
         self.optimizer.update()
 
@@ -70,6 +81,7 @@ class Learner(object):
 
         # transfer states into Chainer format
         s0, s1 = chainer.Variable(s0), chainer.Variable(s1, volatile = True)
+
         # calculate target Q-values (from s1 and on)
         if not self.double_DQN:
             target_q_all = self.forward(self.target_net, s1)
@@ -84,8 +96,10 @@ class Learner(object):
 
         # calculate expected Q-values for all actions
         approx_q_all = self.forward(self.net, s0)
+
         # extract expected Q-values for the actions we actually took
         approx_q_value = approx_q_all.data[np.arange(approx_q_all.data.shape[0]),a]
+
         # calculate the loss gradient
         gradLoss = approx_q_value - target_q_value
 
@@ -96,6 +110,7 @@ class Learner(object):
         # distribute the loss gradient into the shape of the net's output
         gradLossAll = np.zeros_like(approx_q_all.data)
         gradLossAll[np.arange(gradLossAll.shape[0]),a] = gradLoss
+
         # transfer the loss gradient
         approx_q_all.grad = gradLossAll
 
