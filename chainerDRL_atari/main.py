@@ -78,7 +78,7 @@ print('Initializing replay memory...')
 
 # Generate sampler object to sample mini-batches
 # memory = ReplayMemoryHDF5(settings)
-memory = ReplayMemory(settings)
+memory = ReplayMemoryHDF5(settings)
 
 # SETTING UP THE LEARNER
 # Define the network to be used by the learner
