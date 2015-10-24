@@ -63,8 +63,8 @@ class Learner(object):
 
         # reset gradient storage to zero
         self.optimizer.zero_grads()
-
-        # move forward through the net and produce output variable 
+        
+        # move forward through the net and produce output variable
         # containing the loss gradient + MSE loss + average Q-value for taken actions
         approx_q_all, loss, qval_avg = self.forwardLoss(s0, a, r, s1, episode_end_flag)
 
@@ -91,7 +91,7 @@ class Learner(object):
             target_argmax = np.argmax(target_q_all.data, 1)
             target_q_all = self.forward(self.target_net, s1)
             target_q_max = target_q_all.data[np.arange(target_q_all.data.shape[0]),target_argmax]
-      
+
         target_q_value = r + self.discount * target_q_max * (1-1*episode_end_flag) # 'end' here tells us to zero out the step from the future in terminal states
 
         # calculate expected Q-values for all actions
@@ -120,7 +120,7 @@ class Learner(object):
     def policy(self, s):
         s = chainer.Variable(s, volatile = True)
         approx_q_all = self.forward(self.net, s)
-        opt_a = np.argmax(approx_q_all.data,1)   
+        opt_a = np.argmax(approx_q_all.data,1)
         return opt_a
 
     # collect net parameters (coefs and grads)
