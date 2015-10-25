@@ -52,7 +52,7 @@ settings = {
     'target_net_update' : 10000, # update the update-generating target net every fixed number of iterations
     'double_DQN' : True, # use Double DQN (based on Deep Mind paper)
     'optim_name' : 'RMSprop', # currently supports "RMSprop", "ADADELTA" and "SGD"'
-    'gpu' : False,
+    'gpu' : True,
 
     # general
     'seed' : 1234

@@ -4,15 +4,12 @@ Supports double deep Q-learning with on either GPU and CPU
 
 '''
 
-import os
 import numpy as np
 import chainer
 import chainer.functions as F
 from chainer import optimizers
 from chainer import cuda
 from copy import deepcopy
-import math
-import random
 
 import pickle # used to save the nets
 
@@ -26,6 +23,9 @@ class Learner(object):
         self.gpu = settings['gpu']
         if self.gpu:
         	self.net.to_gpu()
+            print("Deep learning on GPU ...")
+        else:
+            print("Deep learning on CPU ...")
 
         self.target_net = deepcopy(net)
 
