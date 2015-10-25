@@ -24,10 +24,10 @@ settings = {
     'batch_size' : 32, # mini-batch size
     'print_every' : 1000, # print out update every 5000 iterations
     'save_dir' : 'nets', # directory where we save the net
-    'eval_every' : 10,
+    'eval_every' : 25,
     'eval_episodes' : 5,
-    'save_every' : 100,
-    'n_episodes' : 10000,
+    'save_every' : 1000,
+    'n_episodes' : 100000,
 
     # Atari simulator settings
     'epsilon' : 1.0,  # Initial exploratoin rate
@@ -50,9 +50,9 @@ settings = {
     'clip_err' : False, # value to clip loss gradients to
     'clip_reward' : False, # value to clip reward values to
     'target_net_update' : 10000, # update the update-generating target net every fixed number of iterations
-    'double_DQN' : False, # use Double DQN (based on Deep Mind paper)
+    'double_DQN' : True, # use Double DQN (based on Deep Mind paper)
     'optim_name' : 'RMSprop', # currently supports "RMSprop", "ADADELTA" and "SGD"'
-    'cuda' : False,
+    'gpu' : False,
 
     # general
     'seed' : 1234

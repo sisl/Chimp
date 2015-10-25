@@ -147,7 +147,7 @@ class Agent(object):
                 total_transition = 0
                 local_counter = 0
 
-        #self.save(learner,'./%s/DQN_final.p' % self.save_dir)
+        self.save(learner,'./%s/agent_final.p' % self.save_dir)
 
 
     # play one game, in training or evaluation mode

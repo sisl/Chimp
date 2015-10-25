@@ -39,16 +39,16 @@ pip install --user .
 cd ..
 
 
-git clone https://github.com/inducer/pycuda pycuda
-cd pycuda
-python configure.py --cuda-root=/usr/local/cuda/
+# git clone https://github.com/inducer/pycuda pycuda
+# cd pycuda
+# python configure.py --cuda-root=/usr/local/cuda/
 # may need to edit path from lib64 to lib
 # sudo install_name_tool -change @rpath/CUDA.framework/Versions/A/CUDA \
 #    /Library/Frameworks/CUDA.framework/CUDA \
 #    /usr/local/cuda/lib/libcuda.dylib
-sudo make install
-cd ..
+# sudo make install
+# cd ..
 
-pip install chainer-cuda-deps
+# pip install chainer-cuda-deps
 # refer to here http://www.slideshare.net/beam2d/introduction-to-chainer-a-flexible-framework-for-deep-learning
 

@@ -4,8 +4,6 @@ Here we use Arcade Learning Environment to for Atari games simulation.
 This file would have to be rewritten, depending on the simulator in use.
 All simulators should provide the following functions:
 __init__, get_screenshot, act, game_over, reset_game
-
-The details of the functions are covered below.
 '''
 
 import numpy as np
@@ -19,6 +17,8 @@ class Atari(object):
     def __init__(self, settings):
 
         # initialize arcade learning environment
+        # using python interface to Arcade Learning Environment
+        # https://github.com/bbitmaster/ale_python_interface/wiki
         self.ale = ALEInterface()
 
         # set # of frames to skip, random seed and the ROM to load
@@ -33,7 +33,7 @@ class Atari(object):
         self.actions = self.ale.getLegalActionSet()
         self.n_actions = self.actions.size
 
-        # the original dimensions of the observation
+        # the original dimensions of the observation (width/height)
         self.screen_dims = self.ale.getScreenDims()
         print("Original screen width/height: " + str(self.screen_dims[0]) + "/" + str(self.screen_dims[1]))
 
@@ -45,8 +45,8 @@ class Atari(object):
         self.pad = settings['pad']
 
         # allocating memory for generated screenshots - needs to be of a particular type
+        # !!!! accepts dims in (height/width format)
         self.screen_data = np.empty((self.screen_dims[1],self.screen_dims[0]),dtype=np.uint8)
-
 
     # get cropped screenshot
     def get_screenshot(self):
@@ -59,7 +59,7 @@ class Atari(object):
         tmp = self.screen_data[(self.screen_dims[1]-self.screen_dims[0]-self.pad):(self.screen_dims[1]-self.pad),:]
         frame = spm.imresize(tmp,self.screen_dims_new[::-1], interp='nearest')  # Scaling
         
-        return frame.T
+        return frame.T # to go from (height/width) to (width/height) - may be dropped for square images
 
     # function to transition the simulator from s to s' using provided action
     # returns the observed reward

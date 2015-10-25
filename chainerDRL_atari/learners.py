@@ -1,6 +1,6 @@
 '''
 (Double) Deep Q-Learning Algorithm Implementation
-ToDo: GPU Support
+Supports double deep Q-learning with on either GPU and CPU
 
 '''
 
@@ -9,6 +9,7 @@ import numpy as np
 import chainer
 import chainer.functions as F
 from chainer import optimizers
+from chainer import cuda
 from copy import deepcopy
 import math
 import random
@@ -21,6 +22,11 @@ class Learner(object):
 
         self.net = net
         self.forward = forward
+        
+        self.gpu = settings['gpu']
+        if self.gpu:
+        	self.net.to_gpu()
+
         self.target_net = deepcopy(net)
 
         self.learning_rate = settings['learning_rate']
@@ -30,8 +36,6 @@ class Learner(object):
         self.clip_reward = settings['clip_reward']
         self.target_net_update = settings['target_net_update']
         self.double_DQN = settings['double_DQN']
-
-        self.cuda = settings['cuda']
 
         # setting up various possible gradient update algorithms
         if settings['optim_name'] == 'RMSprop':
@@ -63,8 +67,8 @@ class Learner(object):
 
         # reset gradient storage to zero
         self.optimizer.zero_grads()
-        
-        # move forward through the net and produce output variable
+
+        # move forward through the net and produce output variable 
         # containing the loss gradient + MSE loss + average Q-value for taken actions
         approx_q_all, loss, qval_avg = self.forwardLoss(s0, a, r, s1, episode_end_flag)
 
@@ -79,26 +83,49 @@ class Learner(object):
     # function to get net output and to calculate the loss
     def forwardLoss(self, s0, a, r, s1, episode_end_flag):
 
+        if self.gpu:
+            s0 = cuda.to_gpu(s0)
+            s1 = cuda.to_gpu(s1)
+
         # transfer states into Chainer format
         s0, s1 = chainer.Variable(s0), chainer.Variable(s1, volatile = True)
 
         # calculate target Q-values (from s1 and on)
         if not self.double_DQN:
             target_q_all = self.forward(self.target_net, s1)
-            target_q_max = np.max(target_q_all.data, 1)
-        else:
-            target_q_all = self.forward(self.net, s1)
-            target_argmax = np.argmax(target_q_all.data, 1)
-            target_q_all = self.forward(self.target_net, s1)
-            target_q_max = target_q_all.data[np.arange(target_q_all.data.shape[0]),target_argmax]
+            if self.gpu:
+                target_q_max = np.max(target_q_all.data.get(), 1)
+            else:
+                target_q_max = np.max(target_q_all.data, 1)
 
-        target_q_value = r + self.discount * target_q_max * (1-1*episode_end_flag) # 'end' here tells us to zero out the step from the future in terminal states
+        else:
+            # when we do double Q-learning
+            # use the current network to determine optimal action in the next state (argmax)
+            target_q_all = self.forward(self.net, s1)
+            if self.gpu:
+                target_argmax = np.argmax(target_q_all.data.get(), 1)
+            else:
+                target_argmax = np.argmax(target_q_all.data, 1)
+
+            # use the target network to determine the value of the selected optimal action in the next state
+            target_q_all = self.forward(self.target_net, s1)
+            if self.gpu:
+                target_q_max = target_q_all.data.get()[np.arange(target_q_all.data.shape[0]),target_argmax]
+            else:
+                target_q_max = target_q_all.data[np.arange(target_q_all.data.shape[0]),target_argmax]
+      
+        # one reinforcement learning back-track
+        # 'end' here tells us to zero out the step from the future in terminal states
+        target_q_value = r + self.discount * target_q_max * (1-1*episode_end_flag)
 
         # calculate expected Q-values for all actions
         approx_q_all = self.forward(self.net, s0)
 
         # extract expected Q-values for the actions we actually took
-        approx_q_value = approx_q_all.data[np.arange(approx_q_all.data.shape[0]),a]
+        if self.gpu:
+            approx_q_value = approx_q_all.data.get()[np.arange(approx_q_all.data.shape[0]),a]
+        else:
+            approx_q_value = approx_q_all.data[np.arange(approx_q_all.data.shape[0]),a]
 
         # calculate the loss gradient
         gradLoss = approx_q_value - target_q_value
@@ -108,19 +135,33 @@ class Learner(object):
             gradLoss = np.clip(gradLoss,-self.clip_err,self.clip_err)
 
         # distribute the loss gradient into the shape of the net's output
-        gradLossAll = np.zeros_like(approx_q_all.data)
+        gradLossAll = np.zeros(approx_q_all.data.shape, dtype=np.float32)
         gradLossAll[np.arange(gradLossAll.shape[0]),a] = gradLoss
 
         # transfer the loss gradient
-        approx_q_all.grad = gradLossAll
+        if self.gpu:
+            approx_q_all.grad = cuda.to_gpu(gradLossAll)
+        else:
+            approx_q_all.grad = gradLossAll
 
         return approx_q_all, np.mean(gradLoss**2), np.mean(approx_q_value)
 
     # extract the optimal policy in the given state
     def policy(self, s):
+
+        if self.gpu:
+            s = cuda.to_gpu(s)
         s = chainer.Variable(s, volatile = True)
+
+        # get all Q-values for given state(s)
         approx_q_all = self.forward(self.net, s)
-        opt_a = np.argmax(approx_q_all.data,1)
+
+        # pick actions that maximize Q-values in each state
+        if self.gpu:
+            opt_a = np.argmax(approx_q_all.data.get(),1)
+        else:
+            opt_a = np.argmax(approx_q_all.data,1)
+
         return opt_a
 
     # collect net parameters (coefs and grads)
