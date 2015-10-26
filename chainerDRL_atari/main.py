@@ -24,8 +24,8 @@ settings = {
     'batch_size' : 32, # mini-batch size
     'print_every' : 1000, # print out update every 5000 iterations
     'save_dir' : 'nets', # directory where we save the net
-    'eval_every' : 25,
-    'eval_episodes' : 5,
+    'eval_every' : 50,
+    'eval_episodes' : 10,
     'save_every' : 1000,
     'n_episodes' : 100000,
 
@@ -34,9 +34,9 @@ settings = {
     'initial_exploration' : 10000,
     'frame_skip' : 4,
     'viz' : True,
+    'viz_cropped' : False, # visualize only what an agent sees? vs. the whole screen
     'rom' : "./roms/breakout.bin",
     'screen_dims_new' : (84,84), # size to which the image shall be cropped
-    'display_dims' : (170,170), # size of the pygame display
     'pad' : 15, # padding parameter - for image cropping - only along the length of the image, to obtain a square
 
     # replay memory settings
@@ -45,12 +45,12 @@ settings = {
 
     # learner settings
     'learning_rate' : 0.0001, 
-    'decay_rate' : 0.99, # decay rate for RMSprop, otherwise not used
-    'discount' : 0.95, # discount rate for RL
+    'decay_rate' : 0.95, # decay rate for RMSprop, otherwise not used
+    'discount' : 0.99, # discount rate for RL
     'clip_err' : False, # value to clip loss gradients to
     'clip_reward' : False, # value to clip reward values to
     'target_net_update' : 10000, # update the update-generating target net every fixed number of iterations
-    'double_DQN' : True, # use Double DQN (based on Deep Mind paper)
+    'double_DQN' : False, # use Double DQN (based on Deep Mind paper)
     'optim_name' : 'RMSprop', # currently supports "RMSprop", "ADADELTA" and "SGD"'
     'gpu' : True,
 

@@ -2,10 +2,13 @@
 
 # sudo chown -R $USER /usr/local/
 
+brew update && brew upgrade 
 pip install --upgrade pip
 
+
 brew install numpy
-pip install scipy
+brew install scipy
+
 pip install chainer
 
 pip install pillow
@@ -18,8 +21,6 @@ pip install -U six
 # sudo make install
 # cd ..
 # cd ..
-
-brew update && brew upgrade 
 
 brew install sdl2
 brew install sdl_gfx

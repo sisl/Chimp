@@ -2,7 +2,7 @@
 Agent framework.
 It is set up with the settings,
 manipulates learner, replay memory and the simulator to do training and evaluation, 
-record, visualize and save results.
+record, and save results.
 '''
 
 import os
@@ -16,20 +16,23 @@ class Agent(object):
 
     def __init__(self, settings):
 
+        # general settings
         self.batch_size = settings['batch_size']
-        self.n_episodes = settings['n_episodes']
         self.n_frames = settings['n_frames']
         self.epsilon = settings['epsilon']
-        self.initial_exploration = settings['initial_exploration']
+        self.viz = settings['viz']
+        
+        # unit of measurement - number of episodes
+        self.n_episodes = settings['n_episodes']
         self.eval_every = settings['eval_every']
         self.eval_episodes = settings['eval_episodes']
 
+        # unit of measurement - number of transitions (memory.counter)
+        self.initial_exploration = settings['initial_exploration']
         self.print_every = settings['print_every']
         self.save_dir = settings['save_dir']
         self.save_every = settings['save_every']
 
-        self.viz = settings['viz']
-        self.display_dims = settings['display_dims']
 
     # helper function to save net (or any object)
     def save(self,obj,name):
@@ -80,13 +83,9 @@ class Agent(object):
         total_loss = 0
         total_qval_avg = 0
 
+        # initialize visualization display
         if self.viz:
-            # initialize pygame screen
-            pygame.init()
-            self.screen = pygame.display.set_mode(self.display_dims)
-
-            if simulator.title:
-                pygame.display.set_caption(simulator.title)
+            simulator.init_viz_display()
 
         print("Running initial exploration for " + str(self.initial_exploration) + " screen transitions...")
 
@@ -100,7 +99,7 @@ class Agent(object):
             memory.episode_counter += 1
             local_counter += 1
 
-            print("Episode #" + str(memory.episode_counter))
+            # print("Episode #" + str(memory.episode_counter))
 
             if local_counter >= self.eval_every and memory.counter >= self.initial_exploration:
 
@@ -134,8 +133,8 @@ class Agent(object):
                 total_qval_avg /= local_counter
                 total_transition /= local_counter
 
-                print('epoch %.2f, iteration %d, loss %.3f, reward %.2f, avg. Q-value %.2f, epsilon %.5f, avg. # of transitions %d' % (
-                    memory.counter/float(memory.memory_size),memory.counter,total_loss,total_reward,total_qval_avg,self.epsilon, total_transition))
+                print('episode %d, epoch %.2f, iteration %d, loss %.3f, reward %.2f, avg. Q-value %.2f, epsilon %.5f, avg. # of transitions %d' % (
+                    memory.episode_counter,memory.counter/float(memory.memory_size),memory.counter,total_loss,total_reward,total_qval_avg,self.epsilon, total_transition))
 
                 learner.val_rewards.append(total_reward)
                 learner.val_losses.append(total_loss)
@@ -171,8 +170,9 @@ class Agent(object):
             if memory.counter == self.initial_exploration:
                 print("Initial exploration over. Learning begins...")
 
-            if memory.counter % 500 == 0:
-                print(str(memory.counter) + " transitions experienced")
+            if memory.counter % self.print_every == 0:
+                print("Episode: " + str(memory.episode_counter) + ", " + 
+                    "Transitions experienced: " +  str(memory.counter))
 
             # INTERACTING WITH THE SIMULATOR AND STORING THE EXPERIENCE
             # getting observation and forming the state
@@ -181,18 +181,16 @@ class Agent(object):
             elif train and memory.counter >= self.initial_exploration:
                 self.a = self.policy(learner, simulator, self.s0, epsilon = self.epsilon)
             else:
-                self.a = self.policy(learner, simulator, self.s0, epsilon = 0.1)
+                self.a = self.policy(learner, simulator, self.s0, epsilon = 0.01)
 
             self.reward = float(simulator.act(self.a));
             episode_reward += self.reward;
 
             self.s1 = self.get_state(simulator)
 
-            # move the image to the screen
+            # move the image to the screen / shut down the game if display is closed
             if self.viz:
-                self.surface = pygame.surfarray.make_surface(self.frame)
-                self.screen.blit(pygame.transform.scale2x(self.surface),(0,0))
-                pygame.display.flip()
+                simulator.refresh_viz_display()
 
             if train:
 
@@ -230,11 +228,6 @@ class Agent(object):
 
             self.s0 = self.s1 # s1 now is s0 during next turn
 
-            # exit training if one closes a screen
-            if self.viz:
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        exit()
 
         # restart episode
         simulator.reset_episode()

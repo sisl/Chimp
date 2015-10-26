@@ -22,7 +22,7 @@ class Learner(object):
         
         self.gpu = settings['gpu']
         if self.gpu:
-        	self.net.to_gpu()
+            self.net.to_gpu()
             print("Deep learning on GPU ...")
         else:
             print("Deep learning on CPU ...")
