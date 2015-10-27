@@ -71,4 +71,6 @@ class POMDPSimulator():
 
     def reset_episode(self):
         pomdp = self.pomdp
-        self.current_state = pomdp
+        self.current_state = pomdp.initial_state()
+        self.current_belief = pomdp.initial_belief()
+
