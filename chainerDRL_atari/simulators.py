@@ -1,113 +1,119 @@
-''' Implements generic definition of the environment simulator.
-Here we use Arcade Learning Environment to for Atari games simulation.
+''' A generic definition of the environment simulator.
+Using Arcade Learning Environment for Atari games simulation.
 
 This file would have to be rewritten, depending on the simulator in use.
 All simulators should provide the following functions:
 __init__, get_screenshot, act, game_over, reset_game
 '''
 
+from ale_python_interface import ALEInterface
+import pygame
 import numpy as np
 import scipy.misc as spm
 
-from ale_python_interface import ALEInterface
-import matplotlib.pyplot as plt
-
-import pygame
 
 class Atari(object):
 
     def __init__(self, settings):
 
-        # initialize arcade learning environment
-        # using python interface to Arcade Learning Environment
-        # https://github.com/bbitmaster/ale_python_interface/wiki
-        self.ale = ALEInterface()
+        '''Initiate Arcade Learning Environment (ALE) using Python interface
+        https://github.com/bbitmaster/ale_python_interface/wiki
 
-        # set # of frames to skip, random seed and the ROM to load
+        a) Set number of frames to be skipped, random seed, ROM and title for display.
+        b) Retrieve a set of legal actions and their number.
+        c) Retrieve dimensions of the original screen (width/height), and set the dimensions
+        of the cropped screen, together with the padding used to crop the screen rectangle.
+        d) Set dimensions of the pygame display that will show visualization of the simulation.
+        (May be cropped --- showing what the learner sees, or not --- showing full Atari screen)
+        e) Allocate memory for generated grayscale screenshots. Accepts dims in (height/width) format
+        '''
+
+        self.ale = ALEInterface()
         self.ale.setInt("frame_skip",settings["frame_skip"])
         self.ale.setInt("random_seed",settings["seed"])
         self.ale.loadROM(settings["rom"])
 
-        # has to be defined for visualization purposes
         self.title = "ALE Simulator: " + str(settings["rom"])
-
-        # the vector of possible actions and their count
         self.actions = self.ale.getLegalActionSet()
         self.n_actions = self.actions.size
 
-        # the original dimensions of the observation (width/height)
         self.screen_dims = self.ale.getScreenDims()
-        print("Original screen width/height: " + str(self.screen_dims[0]) + "/" + str(self.screen_dims[1]))
-
-        # visualize the just the part of image that an agent sees vs. the full display 
-        self.viz_cropped = settings['viz_cropped']
-
-        # cropped dimensions of the observation
         self.screen_dims_new = settings['screen_dims_new']
-        print("Modified screen width/height: " + str(self.screen_dims_new[0]) + "/" + str(self.screen_dims_new[1]))
+        self.pad = settings['pad']
 
-        # size of the visualization display
+        print("Original screen width/height: " + str(self.screen_dims[0]) + "/" + str(self.screen_dims[1]))
+        print("Cropped screen width/height: " + str(self.screen_dims_new[0]) + "/" + str(self.screen_dims_new[1]))
+
+        self.viz_cropped = settings['viz_cropped']
         if self.viz_cropped:
             self.display_dims = (int(self.screen_dims_new[0]*2), int(self.screen_dims_new[1]*2))
         else:
             self.display_dims = (int(self.screen_dims[0]*2), int(self.screen_dims[1]*2))
 
-        # padding during cropping
-        self.pad = settings['pad']
-
-        # allocating memory for generated screenshots - needs to be of a particular type
-        # !!!! accepts dims in (height/width format)
+        # preallocate an array to accept ALE screen data (height/width) !
         self.screen_data = np.empty((self.screen_dims[1],self.screen_dims[0]),dtype=np.uint8)
 
 
-    # get cropped screenshot
     def get_screenshot(self):
+        '''returns a cropped snapshot of the simulator
+        a) store grayscale values in a preallocated array
+        b) cut out a square from the rectangle, using provided padding value
+        c) downsample to the desired size and transpose from (height/width) to (width/height)
+        '''
 
-        # load screen image into self.screen_data
         self.ale.getScreenGrayscale(self.screen_data)
-
-        # cut out a square and downsize it
-        # frame = (spm.imresize(self.screen_data,(110, 84),interp='nearest'))[110-84-8:110-8,:]
         self.tmp = self.screen_data[(self.screen_dims[1]-self.screen_dims[0]-self.pad):(self.screen_dims[1]-self.pad),:]
-        
-        # Scaling + going from (height/width) to (width/height) - may be dropped for square images
-        self.frame = spm.imresize(self.tmp,self.screen_dims_new[::-1], interp='nearest').T  
-        
+        self.frame = spm.imresize(self.tmp,self.screen_dims_new[::-1], interp='nearest').T
+
         return self.frame
 
-    # function to transition the simulator from s to s' using provided action
-    # !!! returns the observed reward
-    # the action that is provided is in form of an index
-    # simulator deals with translating the index into an actual action
-    def act(self,action_index):
-        return self.ale.act(self.actions[action_index])
 
-    # function that return a bool indicator as to whether the game is still running
+    def act(self,action_index):
+        '''function to transition the simulator from s to s' using provided action
+        the action that is provided is in form of an index
+        simulator deals with translating the index into an actual action'''
+
+        self.last_reward = self.ale.act(self.actions[action_index])
+
+
+    def reward(self):
+        '''return reward - has to be called after the "act" function'''
+
+        return self.last_reward
+
+
     def episode_over(self):
+        '''return a boolean indicator on whether the game is still running'''
+
         return self.ale.game_over()
 
-    # function to reset the game that ended
+
     def reset_episode(self):
+        '''reset the game that ended'''
+
         self.ale.reset_game()
 
-    # initialize display that will show visualization
+
     def init_viz_display(self):
+        '''initialize display that will show visualization'''
+
         pygame.init()
         self.screen = pygame.display.set_mode(self.display_dims)
         if self.title:
             pygame.display.set_caption(self.title)
 
-    # refresh display: 
-    # if display shut down - shut down the game
-    # else move current simulator's frame into display
+
     def refresh_viz_display(self):
-        
+        '''if display is shut down, shut the game down
+        else move the current simulator's frame (cropped or not cropped) into the pygame display,
+        after expanding it 2x along x and y dimensions'''
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 exit()
 
         if self.viz_cropped:
-            self.surface = pygame.surfarray.make_surface(self.frame)
+            self.surface = pygame.surfarray.make_surface(self.frame) # has already been transposed
         else:
             self.surface = pygame.surfarray.make_surface(self.screen_data.T)
 
