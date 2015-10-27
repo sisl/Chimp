@@ -20,6 +20,8 @@ ns = sim.n_states() # number of states-input layer size
 steps = 100
 
 for i in range(steps):
+    # get the initial state
+    s = sim.get_screenshot()
     # pick random action
     ai = random.randint(0,na)
 
@@ -28,9 +30,9 @@ for i in range(steps):
 
     # get reward and next states
     r = sim.reward() # real valued reward
-    s = sim.get_screenshot() # pomdp state, this is a belief
+    sp = sim.get_screenshot() # pomdp state, this is a belief
 
-    print s, ai, r
+    print s, ai, r, sp
 
     # check if reached terminal state
     if sim.episode_over():
