@@ -183,7 +183,10 @@ class Agent(object):
             else:
                 self.a = self.policy(learner, simulator, self.s0, epsilon = 0.01)
 
-            self.reward = float(simulator.act(self.a));
+            # act
+            simulator.act(self.a);
+            # observe reward
+            self.reward = float(simulator.reward());
             episode_reward += self.reward;
 
             self.s1 = self.get_state(simulator)
