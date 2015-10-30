@@ -5,38 +5,39 @@ Creates the simulator, replay memory, DQN learner, and passes these to the agent
 '''
 
 import numpy as np
-import random
 
 import chainer
 import chainer.functions as F
 
-from memories import ReplayMemoryHDF5
-from memories import ReplayMemory
-from learners import Learner
-from agents import Agent
-from simulators import Atari
+from memories.memory_hdf5 import ReplayMemoryHDF5
 
+from learners import Learner
+from agents import DQNAgent
+
+from simulators.atari import AtariSimulator
 
 print('Setting training parameters...')
 # Set training settings
 settings = {
     # agent settings
     'batch_size' : 32, # mini-batch size
-    'print_every' : 1000, # print out update every 5000 iterations
-    'save_dir' : 'nets', # directory where we save the net
-    'eval_every' : 50,
-    'eval_episodes' : 10,
-    'save_every' : 1000,
-    'n_episodes' : 100000,
+    'print_every' : 5000, # print out update every 5000 iterations
+    'save_dir' : 'nets_atari', # directory where we save the net
+    'iterations' : 1000000,
+    'eval_iterations' : 5000,
+    'eval_every' : 50000,
+    'save_every' : 50000,
+    'initial_exploration' : 10000,
+    'epsilon_decay' : 1.0/10**6, # subtract 1.0/10**6 every step
+    'eval_epsilon' : 0.05, # epsilon used in evaluation, 0 means no random actions
 
     # Atari simulator settings
     'epsilon' : 1.0,  # Initial exploratoin rate
-    'initial_exploration' : 10000,
     'frame_skip' : 4,
     'viz' : True,
     'viz_cropped' : False, # visualize only what an agent sees? vs. the whole screen
     'rom' : "./roms/breakout.bin",
-    'screen_dims_new' : (84,84), # size to which the image shall be cropped
+    'model_dims' : (84,84), # size to which the image shall be cropped
     'pad' : 15, # padding parameter - for image cropping - only along the length of the image, to obtain a square
 
     # replay memory settings
@@ -44,7 +45,7 @@ settings = {
     'n_frames' : 4,  # number of frames
 
     # learner settings
-    'learning_rate' : 0.0001, 
+    'learning_rate' : 0.00025, 
     'decay_rate' : 0.95, # decay rate for RMSprop, otherwise not used
     'discount' : 0.99, # discount rate for RL
     'clip_err' : False, # value to clip loss gradients to
@@ -56,35 +57,20 @@ settings = {
 
     # general
     'seed' : 1234
-
     }
 
 print(settings)
 
-# Initialize random seed for reproducibility
 np.random.seed(settings["seed"])
-random.seed(settings["seed"])
 
-
-# SETTING UP ATARI SIMULATOR
-
-print('Firing up Atari...')
-
-ale = Atari(settings)
-
-# SETTING UP THE REPLAY MEMORY
- 
 print('Initializing replay memory...')
-
-# Generate sampler object to sample mini-batches
-# memory = ReplayMemoryHDF5(settings)
 memory = ReplayMemoryHDF5(settings)
 
-# SETTING UP THE LEARNER
-# Define the network to be used by the learner
+print('Firing up Atari...')
+simulator = AtariSimulator(settings)
 
 print('Setting up networks...')
-# Set parameters that define the network
+# Set random seed + parameters that define the network (you cannot pass the network a random number generator)
 
 # Define the core layer structure of the network
 net = chainer.FunctionSet(
@@ -92,7 +78,7 @@ net = chainer.FunctionSet(
     l2=F.Convolution2D(32, 64, ksize=4, stride=2, nobias=False, wscale=np.sqrt(2)),
     l3=F.Convolution2D(64, 64, ksize=3, stride=1, nobias=False, wscale=np.sqrt(2)),
     l4=F.Linear(3136, 512, wscale=np.sqrt(2)),
-    l5=F.Linear(512, ale.n_actions, wscale = np.sqrt(2))
+    l5=F.Linear(512, simulator.n_actions, wscale = np.sqrt(2))
     )
 
 # Define forward pass that specifies all extra activation functions and how the net produces output
@@ -106,16 +92,18 @@ def forward(net, s):
     output = net.l5(h4)
     return output
 
-# initialize Learner object that will handle the net updates and policy extraction
 print('Initializing the learner...')
 learner = Learner(net, forward, settings)
 
-# SETTING UP THE EXPERIMENT
-
-# initialize Agent
 print('Initializing the agent framework...')
-agent = Agent(settings)
+agent = DQNAgent(settings)
 
 print('Training...')
-# starting training
-agent.train(learner, memory, ale)
+agent.train(learner, memory, simulator)
+
+print('Loading the net...')
+learner = agent.load('./nets_atari/learner_final.p')
+
+print('Evaluating DQN agent...')
+print('(reward, MSE loss, mean Q-value, episodes)')
+agent.evaluate(learner, simulator, 50000)

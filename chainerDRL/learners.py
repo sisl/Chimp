@@ -27,7 +27,7 @@ class Learner(object):
         else:
             print("Deep learning on CPU ...")
 
-        self.target_net = deepcopy(net)
+        self.target_net = deepcopy(self.net)
 
         self.learning_rate = settings['learning_rate']
         self.decay_rate = settings['decay_rate']
@@ -40,12 +40,16 @@ class Learner(object):
         # setting up various possible gradient update algorithms
         if settings['optim_name'] == 'RMSprop':
             self.optimizer = optimizers.RMSprop(lr=self.learning_rate, alpha=self.decay_rate)
+
         elif settings['optim_name'] == 'ADADELTA':
             print("Supplied learning rate not used with ADADELTA gradient update method")
             self.optimizer = optimizers.AdaDelta()
+
         elif settings['optim_name'] == 'SGD':
             self.optimizer = optimizers.SGD(lr=self.learning_rate)
+
         else:
+
             print('The requested optimizer is not supported!!!')
             exit()
 
@@ -55,9 +59,13 @@ class Learner(object):
         self.train_losses = []
         self.train_rewards = []
         self.train_qval_avgs = []
+        self.train_times = []
         self.val_losses = []
         self.val_rewards = []
         self.val_qval_avgs = []
+        self.val_times = []
+
+        self.overall_time = 0
 
     # sampling of one mini-batch and one update using it
     def gradUpdate(self, s0, a, r, s1, episode_end_flag):
@@ -163,6 +171,17 @@ class Learner(object):
             opt_a = np.argmax(approx_q_all.data,1)
 
         return opt_a
+
+    # function to update target net with the current net
+    def net_to_target_net(self):
+        self.target_net = deepcopy(self.net)
+
+    # function to load in a new net
+    def load_net(self,net):
+        self.net = deepcopy(net)
+        if self.gpu:
+            self.net.to_gpu()
+        self.target_net = deepcopy(self.net)
 
     # collect net parameters (coefs and grads)
     def params(self, net):

@@ -53,7 +53,7 @@ class ReplayMemoryHDF5(object):
 
         else:
             self.memory_size = settings['memory_size']
-            state_shape = (settings['n_frames'],) + settings['screen_dims_new']
+            state_shape = (settings['n_frames'],) + settings['model_dims']
 
             self.state = self.fp.create_dataset('state',
             (self.memory_size,) + state_shape, dtype='float32')
@@ -69,14 +69,12 @@ class ReplayMemoryHDF5(object):
             self.state.attrs['head'] = 0
             self.state.attrs['valid'] = 0
 
-        # count number of iterations
-        self.counter = 0
-
         # index of current "write" location
         self.head = self.state.attrs['head']
 
         # greatest index of any valid experience; i.e., [0, self.valid)
         self.valid = self.state.attrs['valid']
+
 
     def minibatch(self, batch_size):
         ''' Uniformly sample (s,a,r,s') experiences from the replay dataset.
@@ -116,6 +114,7 @@ class ReplayMemoryHDF5(object):
 
         return self.state[indices], self.action[next_indices], self.reward[next_indices], next_states, self.terminal[next_indices]
 
+
     def store_tuple(self, prevstate, action, reward, state, terminal=False):
         ''' Stores an experience tuple into the replay dataset, i.e., a 
         triple (action, reward, state) where |state| is the result of the
@@ -139,8 +138,7 @@ class ReplayMemoryHDF5(object):
         # update head and valid pointers
         self.head = (self.head + 1) % self.memory_size
         self.valid = min(self.memory_size, self.valid + 1)
-
-        self.counter += 1
+        
 
     def __del__(self):
         ''' Stores the memory dataset into the file when program ends. '''
@@ -150,44 +148,3 @@ class ReplayMemoryHDF5(object):
         self.state.attrs['head'] = self.head
         self.state.attrs['valid'] = self.valid
         self.fp.close()
-
-
-'''
-An alternative replay memory that does not utilize HDF5 - less efficient
-'''
-
-class ReplayMemory(object):
-
-    def __init__(self, settings):
-        self.memory_size = settings['memory_size']
-        self.screen_dims_new = settings['screen_dims_new']
-        self.n_frames = settings['n_frames']
-        self.data = [np.zeros((self.memory_size, self.n_frames, self.screen_dims_new[0], self.screen_dims_new[1]), dtype=np.float32),
-            np.zeros(self.memory_size, dtype=np.int32),
-            np.zeros(self.memory_size, dtype=np.float32),
-            np.zeros((self.memory_size, self.n_frames, self.screen_dims_new[0], self.screen_dims_new[1]), dtype=np.float32),
-            np.zeros(self.memory_size, dtype=np.bool)]
-        self.counter = 0
-
-    # function to sample a mini-batch
-    def minibatch(self, batch_size):
-        # sampling a mini-batch of the given size with replacement
-        ind = np.random.randint(0,min(self.counter,self.memory_size),batch_size)
-        return self.data[0][ind], self.data[1][ind], self.data[2][ind], self.data[3][ind], self.data[4][ind]
-
-    # function to store the observed experience and keep the count within the replay memory
-    def store_tuple(self, s0, a, r, s1, episode_end_flag = False):
-
-        # keep the most recent observations within the limit of the memory
-        ind = self.counter % self.memory_size
-
-        self.data[0][ind] = s0
-        self.data[1][ind] = a
-        self.data[2][ind] = r
-
-        if not episode_end_flag:
-            self.data[3][ind] = s1
-
-        self.data[4][ind] = episode_end_flag
-    
-        self.counter += 1

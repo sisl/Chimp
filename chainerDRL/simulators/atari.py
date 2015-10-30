@@ -1,18 +1,11 @@
-''' A generic definition of the environment simulator.
-Using Arcade Learning Environment for Atari games simulation.
-
-This file would have to be rewritten, depending on the simulator in use.
-All simulators should provide the following functions:
-__init__, get_screenshot, act, game_over, reset_game
-'''
-
 from ale_python_interface import ALEInterface
 import pygame
+
 import numpy as np
 import scipy.misc as spm
 
 
-class Atari(object):
+class AtariSimulator(object):
 
     def __init__(self, settings):
 
@@ -38,15 +31,15 @@ class Atari(object):
         self.n_actions = self.actions.size
 
         self.screen_dims = self.ale.getScreenDims()
-        self.screen_dims_new = settings['screen_dims_new']
+        self.model_dims = settings['model_dims']
         self.pad = settings['pad']
 
         print("Original screen width/height: " + str(self.screen_dims[0]) + "/" + str(self.screen_dims[1]))
-        print("Cropped screen width/height: " + str(self.screen_dims_new[0]) + "/" + str(self.screen_dims_new[1]))
+        print("Cropped screen width/height: " + str(self.model_dims[0]) + "/" + str(self.model_dims[1]))
 
         self.viz_cropped = settings['viz_cropped']
         if self.viz_cropped:
-            self.display_dims = (int(self.screen_dims_new[0]*2), int(self.screen_dims_new[1]*2))
+            self.display_dims = (int(self.model_dims[0]*2), int(self.model_dims[1]*2))
         else:
             self.display_dims = (int(self.screen_dims[0]*2), int(self.screen_dims[1]*2))
 
@@ -63,7 +56,7 @@ class Atari(object):
 
         self.ale.getScreenGrayscale(self.screen_data)
         self.tmp = self.screen_data[(self.screen_dims[1]-self.screen_dims[0]-self.pad):(self.screen_dims[1]-self.pad),:]
-        self.frame = spm.imresize(self.tmp,self.screen_dims_new[::-1], interp='nearest').T
+        self.frame = spm.imresize(self.tmp,self.model_dims[::-1], interp='nearest').T
 
         return self.frame
 
@@ -86,7 +79,7 @@ class Atari(object):
         '''return a boolean indicator on whether the game is still running'''
 
         return self.ale.game_over()
-
+        
 
     def reset_episode(self):
         '''reset the game that ended'''
@@ -119,3 +112,4 @@ class Atari(object):
 
         self.screen.blit(pygame.transform.scale2x(self.surface),(0,0))
         pygame.display.flip()
+
