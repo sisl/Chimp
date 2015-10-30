@@ -41,6 +41,7 @@
 *.csv
 *.jld
 *.mat
+*.p
 
 # Images #
 ##########
