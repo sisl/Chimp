@@ -15,21 +15,21 @@ from learners import Learner
 from agents import DQNAgent
 
 from simulators.pomdp import POMDPSimulator
-from simulators.tiger import TigerPOMDP
+from simulators.pomdp import TigerPOMDP
 
 print('Setting training parameters...')
 # Set training settings
 settings = {
     # agent settings
-    'batch_size' : 32, # mini-batch size
-    'print_every' : 5000, # print out update every 5000 iterations
-    'save_dir' : 'nets_tiger', # directory where we save the net
+    'batch_size' : 32,
+    'print_every' : 5000,
+    'save_dir' : 'results/nets_tiger',
     'iterations' : 200000,
     'eval_iterations' : 5000,
     'eval_every' : 5000,
     'save_every' : 25000,
     'initial_exploration' : 10000,
-    'epsilon_decay' : 0.0001, # subtract 1.0/10**6 every step
+    'epsilon_decay' : 0.0001, # subtract from epsilon every step
     'eval_epsilon' : 0.05, # epsilon used in evaluation, 0 means no random actions
 
     # simulator settings
@@ -44,13 +44,13 @@ settings = {
     # learner settings
     'learning_rate' : 0.00025, 
     'decay_rate' : 0.95, # decay rate for RMSprop, otherwise not used
-    'discount' : 0.99, # discount rate for RL
+    'discount' : 0.95, # discount rate for RL
     'clip_err' : False, # value to clip loss gradients to
     'clip_reward' : False, # value to clip reward values to
-    'target_net_update' : 10000, # update the update-generating target net every fixed number of iterations
+    'target_net_update' : 1000, # update the update-generating target net every fixed number of iterations
     'double_DQN' : False, # use Double DQN (based on Deep Mind paper)
     'optim_name' : 'RMSprop', # currently supports "RMSprop", "ADADELTA" and "SGD"'
-    'gpu' : True,
+    'gpu' : False,
 
     # general
     'seed' : 1234
@@ -71,7 +71,7 @@ simulator = POMDPSimulator(pomdp, settings)
 print('Setting up networks...')
 
 net = chainer.FunctionSet(
-    l1=F.Linear(2, 200, wscale=np.sqrt(2)),
+    l1=F.Linear(2*settings["n_frames"], 200, wscale=np.sqrt(2)),
     l2=F.Linear(200, 100, wscale=np.sqrt(2)),
     l3=F.Linear(100, 100, wscale=np.sqrt(2)),
     l4=F.Linear(100, 50, wscale=np.sqrt(2)),
@@ -98,11 +98,14 @@ agent.train(learner, memory, simulator)
 print('Loading the net...')
 learner = agent.load('./nets_tiger/learner_final.p')
 
+
+np.random.seed(359)
+
 print('Evaluating DQN agent...')
-print('(reward, MSE loss, mean Q-value, episodes - NA)')
-agent.evaluate(learner, simulator, 50000)
+print('(reward, MSE loss, mean Q-value, episodes - NA, time)')
+print(agent.evaluate(learner, simulator, 50000))
 
 print('Evaluating optimal policy...')
-print('(reward, NA, NA, episodes - NA)')
-agent.evaluate(learner, simulator, 50000, custom_policy=pomdp.optimal_policy())
+print('(reward, NA, NA, episodes - NA, time)')
+print(agent.evaluate(learner, simulator, 50000, custom_policy=pomdp.optimal_policy()))
 

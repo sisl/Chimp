@@ -9,7 +9,7 @@ import numpy as np
 import chainer
 import chainer.functions as F
 
-from memories.memory_hdf5 import ReplayMemoryHDF5
+from memories import ReplayMemoryHDF5
 
 from learners import Learner
 from agents import DQNAgent
@@ -22,7 +22,7 @@ settings = {
     # agent settings
     'batch_size' : 32, # mini-batch size
     'print_every' : 5000, # print out update every 5000 iterations
-    'save_dir' : 'nets_atari', # directory where we save the net
+    'save_dir' : './results/nets_atari/', # directory where we save the net
     'iterations' : 1000000,
     'eval_iterations' : 5000,
     'eval_every' : 50000,
@@ -36,7 +36,8 @@ settings = {
     'frame_skip' : 4,
     'viz' : True,
     'viz_cropped' : False, # visualize only what an agent sees? vs. the whole screen
-    'rom' : "./roms/breakout.bin",
+    'rom' : "breakout.bin",
+    'rom_dir' : "./simulators/atari/roms/",
     'model_dims' : (84,84), # size to which the image shall be cropped
     'pad' : 15, # padding parameter - for image cropping - only along the length of the image, to obtain a square
 

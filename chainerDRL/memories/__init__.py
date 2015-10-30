@@ -1,5 +1,4 @@
 ''' Implements Experience Replay Memory '''
 
-import numpy as np
-import random
-import h5py
+from memory_hdf5 import ReplayMemoryHDF5
+from memory import ReplayMemory

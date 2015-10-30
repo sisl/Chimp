@@ -13,6 +13,8 @@ import pygame
 import matplotlib.pyplot as plt
 
 from timeit import default_timer as timer
+# from time import clock
+
 
 class DQNAgent(object):
 
@@ -59,10 +61,10 @@ class DQNAgent(object):
     # get state
     def get_state(self, simulator):
         # get screenshot
-        self.frame = simulator.get_screenshot()
+        self.frame = simulator.get_screenshot().reshape(simulator.model_dims)
 
         # add screenshot to the state to the 
-        ind = [i+1 for i in range(self.n_frames - 1)]
+        ind = [i+1 for i in xrange(self.n_frames - 1)]
         tmp = []
         for i in ind:
             tmp.append(self.state[0][i])
@@ -94,12 +96,12 @@ class DQNAgent(object):
 
         self.iteration = 0
 
-        total_reward = 0
-        total_loss = 0
-        total_qval_avg = 0
+        total_reward = 0.0
+        total_loss = 0.0
+        total_qval_avg = 0.0
         episode_counter = 0
         local_counter = 0
-        end_evaluation = 0
+        end_evaluation = 0.0
 
         global_start = timer()
 
@@ -119,7 +121,7 @@ class DQNAgent(object):
                 episode_counter += episode
                 end_exploration = timer()
 
-            else:
+            else: # exploration ended
 
                 reward, loss, qval_avg, episode = self.perceive(learner, memory, simulator, True, False)
 
@@ -131,8 +133,8 @@ class DQNAgent(object):
                 local_counter += 1
 
                 if self.iteration % self.save_every == 0:
-                    print('Saving ./%s/net_%d.p' % (self.save_dir,int(self.iteration)))
-                    self.save(learner.net,'./%s/net_%d.p' % (self.save_dir,int(self.iteration)))
+                    print('Saving %snet_%d.p' % (self.save_dir,int(self.iteration)))
+                    self.save(learner.net,'%snet_%d.p' % (self.save_dir,int(self.iteration)))
 
                 if self.iteration % self.eval_every == 0:
 
@@ -157,7 +159,7 @@ class DQNAgent(object):
                     self.state = np.zeros((1, self.n_frames, simulator.model_dims[0], simulator.model_dims[1]), dtype=np.float32)
                     self.s0 = self.get_state(simulator)
 
-                    for i in range(self.eval_iterations):
+                    for i in xrange(self.eval_iterations):
 
                         reward, loss, qval_avg, episode = self.perceive(learner,memory,simulator,False, False)
                         
@@ -197,7 +199,7 @@ class DQNAgent(object):
         global_end = timer()
         learner.overall_time = global_end - global_start
         print('Overall training + evaluation time: '+ str(learner.overall_time))
-        self.save(learner,'./%s/agent_final.p' % self.save_dir)
+        self.save(learner,'./%s/learner_final.p' % self.save_dir)
 
 
     # one iteration in training or evaluation mode
@@ -288,7 +290,9 @@ class DQNAgent(object):
 
         episode_counter = 0
 
-        for i in range(eval_iterations):
+        start = timer()
+
+        for i in xrange(eval_iterations):
 
             reward, loss, qval_avg, episode = self.perceive(learner, None, simulator, False, False, custom_policy)
             
@@ -298,11 +302,13 @@ class DQNAgent(object):
 
             episode_counter += episode
 
+        end = timer()
+
         total_reward /= eval_iterations
         total_loss /= eval_iterations
         total_qval_avg /= eval_iterations
 
         simulator.reset_episode()
 
-        return total_reward, total_loss, total_qval_avg, episode_counter
+        return total_reward, total_loss, total_qval_avg, episode_counter,  end - start
 

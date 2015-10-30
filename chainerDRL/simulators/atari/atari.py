@@ -12,19 +12,19 @@ class AtariSimulator(object):
         '''Initiate Arcade Learning Environment (ALE) using Python interface
         https://github.com/bbitmaster/ale_python_interface/wiki
 
-        a) Set number of frames to be skipped, random seed, ROM and title for display.
-        b) Retrieve a set of legal actions and their number.
-        c) Retrieve dimensions of the original screen (width/height), and set the dimensions
+        - Set number of frames to be skipped, random seed, ROM and title for display.
+        - Retrieve a set of legal actions and their number.
+        - Retrieve dimensions of the original screen (width/height), and set the dimensions
         of the cropped screen, together with the padding used to crop the screen rectangle.
-        d) Set dimensions of the pygame display that will show visualization of the simulation.
+        - Set dimensions of the pygame display that will show visualization of the simulation.
         (May be cropped --- showing what the learner sees, or not --- showing full Atari screen)
-        e) Allocate memory for generated grayscale screenshots. Accepts dims in (height/width) format
+        - Allocate memory for generated grayscale screenshots. Accepts dims in (height/width) format
         '''
 
         self.ale = ALEInterface()
         self.ale.setInt("frame_skip",settings["frame_skip"])
         self.ale.setInt("random_seed",settings["seed"])
-        self.ale.loadROM(settings["rom"])
+        self.ale.loadROM(settings["rom_dir"] + settings["rom"])
 
         self.title = "ALE Simulator: " + str(settings["rom"])
         self.actions = self.ale.getLegalActionSet()
@@ -49,9 +49,9 @@ class AtariSimulator(object):
 
     def get_screenshot(self):
         '''returns a cropped snapshot of the simulator
-        a) store grayscale values in a preallocated array
-        b) cut out a square from the rectangle, using provided padding value
-        c) downsample to the desired size and transpose from (height/width) to (width/height)
+        - store grayscale values in a preallocated array
+        - cut out a square from the rectangle, using provided padding value
+        - downsample to the desired size and transpose from (height/width) to (width/height)
         '''
 
         self.ale.getScreenGrayscale(self.screen_data)

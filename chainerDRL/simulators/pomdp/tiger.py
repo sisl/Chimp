@@ -144,7 +144,7 @@ class TigerPOMDP():
         return DiscreteBelief(self.n_states())
 
     def initial_state(self):
-        return np.random.randint(0,1)
+        return np.random.randint(2)
 
     ################################################################# 
     # Misc Functions
@@ -172,9 +172,9 @@ class TigerPOMDP():
 
     def optimal_policy(self):
         def pol(b):
-            if b[0] < 0.04:
+            if b[0] < 0.03:
                 return 0
-            elif b[0] > 0.96:
+            elif b[0] > 0.97:
                 return 1
             else:
                 return 2
