@@ -131,11 +131,11 @@ class TigerPOMDP():
     # Create functions
     ################################################################# 
     def create_transition_distribution(self):
-        td = np.array([1.0, 0.0])
+        td = np.array([0.5, 0.5])
         return td
 
     def create_observation_distribution(self):
-        od = np.array([1.0, 0.0])
+        od = np.array([0.5, 0.5])
         return od
 
     def create_belief(self):

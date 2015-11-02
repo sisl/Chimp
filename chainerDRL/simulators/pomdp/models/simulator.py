@@ -44,10 +44,9 @@ class POMDPSimulator():
 
         r = pomdp.reward(s, a)
         
-        print "Before sampling: ", tdist, s
         tdist = pomdp.transition(s, a, dist = tdist)
         s = pomdp.sample_state(tdist)
-        print "After sampling: ", tdist, s 
+        print "Distribution: ", tdist, " State: ", s 
 
         odist = pomdp.observation(s, a, dist = odist)
         o = pomdp.sample_observation(odist)
@@ -55,6 +54,7 @@ class POMDPSimulator():
         b.update(pomdp, a, o)
 
         self.current_reward = r
+        self.current_state = s
 
     # returns the current simulator belief
     def get_screenshot(self):

@@ -44,8 +44,10 @@ class POMDPSimulator():
 
         r = pomdp.reward(s, a)
         
+        print "Before sampling: ", tdist, s
         tdist = pomdp.transition(s, a, dist = tdist)
         s = pomdp.sample_state(tdist)
+        print "After sampling: ", tdist, s 
 
         odist = pomdp.observation(s, a, dist = odist)
         o = pomdp.sample_observation(odist)
