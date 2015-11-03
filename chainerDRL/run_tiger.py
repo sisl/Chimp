@@ -32,6 +32,7 @@ settings = {
     'epsilon_decay' : 0.0001, # subtract from epsilon every step
     'eval_epsilon' : 0.05, # epsilon used in evaluation, 0 means no random actions
     'epsilon' : 1.0,  # Initial exploratoin rate
+    'model_dims': (2,1),
 
     # simulator settings
     'viz' : False,
@@ -41,8 +42,8 @@ settings = {
     'n_frames' : 1,  # number of frames
 
     # learner settings
-    'learning_rate' : 0.00025, 
-    'decay_rate' : 0.95, # decay rate for RMSprop, otherwise not used
+    'learning_rate' : 0.001, 
+    'decay_rate' : 0.99, # decay rate for RMSprop, otherwise not used
     'discount' : 0.95, # discount rate for RL
     'clip_err' : False, # value to clip loss gradients to
     'clip_reward' : False, # value to clip reward values to
@@ -52,10 +53,10 @@ settings = {
     'gpu' : False,
 
     # general
-    'seed_general' : 1234,
-    'seed_simulator' : 1234,
-    'seed_agent' : 1234,
-    'seed_memory' : 1234
+    'seed_general' : 1723,
+    'seed_simulator' : 5632,
+    'seed_agent' : 9826,
+    'seed_memory' : 7563
 
     }
 

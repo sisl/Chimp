@@ -51,7 +51,6 @@ class POMDPSimulator():
         
         tdist = pomdp.transition(s, a, dist = tdist)
         s = pomdp.sample_state(tdist)
-        print "Distribution: ", tdist, " State: ", s 
 
         odist = pomdp.observation(s, a, dist = odist)
         o = pomdp.sample_observation(odist)

@@ -25,7 +25,7 @@ settings = {
     'save_dir' : './results/nets_atari/', # directory where we save the net
     'iterations' : 10000000,
     'eval_iterations' : 5000,
-    'eval_every' : 50000,
+    'eval_every' : 5000,
     'save_every' : 50000,
     'initial_exploration' : 10000,
     'epsilon_decay' : 1.0/10**6, # subtract 1.0/10**6 every step

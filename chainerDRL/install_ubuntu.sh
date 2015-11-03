@@ -42,6 +42,7 @@ cd ..
 
 sudo apt-get -y update && sudo apt-get -y upgrade
 sudo apt-get -y install build-essential
+
 wget http://developer.download.nvidia.com/compute/cuda/7.5/Prod/local_installers/cuda_7.5.18_linux.run
 
 chmod +x cuda_7.5.18_linux.run
@@ -54,11 +55,13 @@ echo -e "blacklist nouveau\nblacklist lbm-nouveau\noptions nouveau modeset=0\nal
 
 echo options nouveau modeset=0 | sudo tee -a /etc/modprobe.d/nouveau-kms.conf
 sudo update-initramfs -u
-sudo reboot
 
 sudo apt-get -y install linux-source
 sudo apt-get -y install linux-headers-`uname -r`
-apt-get -y install linux-headers-generic
+sudo apt-get -y install linux-headers-generic
+
+sudo reboot
+
 
 cd nvidia_installers
 sudo ./NVIDIA-Linux-x86_64-352.39.run
@@ -69,41 +72,41 @@ sudo apt-get install build-essential
 sudo ./cuda-linux64-rel-7.5.18-19867135.run
 sudo ./cuda-samples-linux-7.5.18-19867135.run
 
-echo "export PATH=$PATH:/usr/local/cuda-7.5/bin" >> ~/.bashrc
-echo "export LD_LIBRARY_PATH=:/usr/local/cuda-7.5/lib64" >> ~/.bashrc
+echo "export PATH=/usr/local/cuda-7.5/bin:$PATH" >> ~/.bashrc
+echo "export LD_LIBRARY_PATH=/usr/local/cuda-7.5/lib64:$LD_LIBRARY_PATH" >> ~/.bashrc
 
 source ~/.bashrc
 
+cd
 
-sudo ln -s /usr/local/cuda-7.5/lib64/libcublas.so /usr/local/cuda-7.5/lib64/libcublas.so.7.5
+
+# NOW ENTER 'SUDO SU' - to become a superuser while not reseting the path
+# RUN ALL THE COMMANDS YOU NEED
+
+# sudo ln -s /usr/local/cuda-7.5/lib64/libcublas.so /usr/local/cuda-7.5/lib64/libcublas.so.7.5
 
 # https://devtalk.nvidia.com/default/topic/845363/libcublas-so-7-0-cannot-open-shared-object-file/
-
-echo "/usr/local/cuda-7.5/lib64" | sudo tee -a /etc/ld.so.conf.d/cuda.conf
-echo "/usr/local/cuda-7.5/lib" | sudo tee -a /etc/ld.so.conf.d/cuda.conf
-sudo ldconfig
+# echo "/usr/local/cuda-7.5/lib" | sudo tee -a /etc/ld.so.conf.d/cuda.conf
+# sudo ldconfig
 
 # tar -zxf cudnn-6.5-linux-x64-v2.tgz
 # cd cudnn-6.5-linux-x64-v2
-# sudo cp lib* /usr/local/cuda/lib64/
-# sudo cp cudnn.h /usr/local/cuda/include/
+# sudo cp lib* /usr/local/cuda-6.5/lib64/
+# sudo cp cudnn.h /usr/local/cuda-6.5/include/
 
 
-env LD_LIBRARY_PATH=/usr/lib/nvidia-352 cabal --extra-include-dirs=/usr/local/cuda/include --extra-lib-dirs=/usr/lib/nvidia-352/ install accelerate-cuda
 
-
+: ' 
 sudo apt-get update -y
 sudo apt-get install -y git wget linux-image-generic build-essential unzip
 
 cd /tmp
-wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1404/x86_64/cuda-repo-ubuntu1404_7.0-28_amd64.deb
-sudo dpkg -i cuda-repo-ubuntu1404_7.0-28_amd64.deb
+wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1404/x86_64/cuda-repo-ubuntu1404_7.5-18_amd64.deb
+
+sudo dpkg -i cuda-repo-ubuntu1404_7.5-18_amd64.deb
 
 sudo apt-get update
 sudo apt-get install -y cuda  
-
-echo "export PATH=/usr/local/cuda-7.5/bin:$PATH" >> ~/.bashrc
-echo "export LD_LIBRARY_PATH=/usr/local/cuda-7.5/lib64:$LD_LIBRARY_PATH" >> ~/.bashrc
 
 echo -e "\nexport CUDA_HOME=/usr/local/cuda-7.5\nexport CUDA_ROOT=/usr/local/cuda-7.5" >> ~/.bashrc
 echo -e "\nexport PATH=/usr/local/cuda-7.5/bin:\$PATH\nexport LD_LIBRARY_PATH=/usr/local/cuda-7.5/lib64:\$LD_LIBRARY_PATH" >> ~/.bashrc
@@ -122,3 +125,5 @@ sudo apt-get -y install nvidia-352 nvidia-352-dev nvidia-352-uvm libcuda1-352 nv
 sudo apt-get update && sudo apt-get install cuda
 
 sudo reboot
+'
+
