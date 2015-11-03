@@ -23,7 +23,7 @@ settings = {
     'batch_size' : 32, # mini-batch size
     'print_every' : 5000, # print out update every 5000 iterations
     'save_dir' : './results/nets_atari/', # directory where we save the net
-    'iterations' : 1000000,
+    'iterations' : 10000000,
     'eval_iterations' : 5000,
     'eval_every' : 50000,
     'save_every' : 50000,
@@ -36,7 +36,7 @@ settings = {
     'frame_skip' : 4,
     'viz' : True,
     'viz_cropped' : False, # visualize only what an agent sees? vs. the whole screen
-    'rom' : "breakout.bin",
+    'rom' : "Breakout.bin",
     'rom_dir' : "./simulators/atari/roms/",
     'model_dims' : (84,84), # size to which the image shall be cropped
     'pad' : 15, # padding parameter - for image cropping - only along the length of the image, to obtain a square
@@ -57,12 +57,15 @@ settings = {
     'gpu' : True,
 
     # general
-    'seed' : 1234
+    'seed_general' : 1234,
+    'seed_simulator' : 1234,
+    'seed_agent' : 1234,
+    'seed_memory' : 1234
     }
 
 print(settings)
 
-np.random.seed(settings["seed"])
+np.random.seed(settings["seed_general"])
 
 print('Initializing replay memory...')
 memory = ReplayMemoryHDF5(settings)
@@ -103,7 +106,7 @@ print('Training...')
 agent.train(learner, memory, simulator)
 
 print('Loading the net...')
-learner = agent.load('./nets_atari/learner_final.p')
+learner = agent.load('./results/nets_atari/learner_final.p')
 
 print('Evaluating DQN agent...')
 print('(reward, MSE loss, mean Q-value, episodes)')

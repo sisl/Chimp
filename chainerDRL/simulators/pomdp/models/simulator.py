@@ -8,9 +8,7 @@ import numpy as np
 class POMDPSimulator():
 
     # constructor
-    def __init__(self, pomdp, 
-                 robs=False,
-                 rseed=1):
+    def __init__(self, pomdp, robs=False):
         self.pomdp = pomdp
         self.current_state = pomdp.initial_state()
         self.current_action = None
@@ -19,18 +17,25 @@ class POMDPSimulator():
         self.current_reward = 0.0
 
         self.robs = robs # returns observation or belief
-        self.rseed = rseed # random seed
 
         self.tdist = pomdp.create_transition_distribution()
         self.odist = pomdp.create_observation_distribution()
 
+        self.n_actions = self.pomdp.n_actions()
+        self.n_states = self.pomdp.n_states()
+
+        if not robs:
+            self.model_dims = self.pomdp.belief_shape
+        else:
+            self.model_dims = self.pomdp.observation_shape
+
     # returns the number of actions
-    def n_actions(self):
-        return self.pomdp.n_actions()
+    #def n_actions(self):
+    #    return self.pomdp.n_actions()
 
     # returns the number of states
-    def n_states(self):
-        return self.pomdp.n_states()
+    #def n_states(self):
+    #    return self.pomdp.n_states()
 
     # progress single step in simulation
     def act(self, ai):

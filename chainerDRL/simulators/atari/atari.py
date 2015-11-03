@@ -23,7 +23,7 @@ class AtariSimulator(object):
 
         self.ale = ALEInterface()
         self.ale.setInt("frame_skip",settings["frame_skip"])
-        self.ale.setInt("random_seed",settings["seed"])
+        self.ale.setInt("random_seed",settings["seed_simulator"])
         self.ale.loadROM(settings["rom_dir"] + settings["rom"])
 
         self.title = "ALE Simulator: " + str(settings["rom"])

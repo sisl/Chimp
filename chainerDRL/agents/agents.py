@@ -20,6 +20,8 @@ class DQNAgent(object):
 
     def __init__(self, settings):
 
+        self.random_state = np.random.RandomState(settings['seed_agent'])
+
         # general settings
         self.batch_size = settings['batch_size']
         self.n_frames = settings['n_frames']
@@ -52,8 +54,8 @@ class DQNAgent(object):
 
     # masking function for learner policy - for e-greedy simulator action selection
     def policy(self, learner, simulator, s, epsilon = 0):
-        if np.random.rand() < epsilon:
-            opt_a = np.random.randint(0, simulator.n_actions)
+        if self.random_state.rand() < epsilon:
+            opt_a = self.random_state.randint(0, simulator.n_actions)
         else:
             opt_a = learner.policy(s)
         return opt_a
@@ -135,12 +137,17 @@ class DQNAgent(object):
                 if self.iteration % self.save_every == 0:
                     print('Saving %snet_%d.p' % (self.save_dir,int(self.iteration)))
                     self.save(learner.net,'%snet_%d.p' % (self.save_dir,int(self.iteration)))
+                    
+                    global_end = timer()
+                    learner.overall_time = global_end - global_start
+                    print('Overall training + evaluation time: '+ str(learner.overall_time))
+                    self.save(learner,'%slearner_final.p' % self.save_dir)
 
                 if self.iteration % self.eval_every == 0:
 
                     end_training = timer()
 
-                    total_reward /= local_counter
+                    # total_reward /= local_counter
                     total_loss /= local_counter
                     total_qval_avg /= local_counter
                     total_train_time = end_training - max(end_exploration,end_evaluation)
@@ -170,12 +177,12 @@ class DQNAgent(object):
 
                     end_evaluation = timer()
 
-                    total_reward /= local_counter
+                    # total_reward /= local_counter
                     total_loss /= local_counter
                     total_qval_avg /= local_counter
                     total_eval_time = (end_evaluation - end_training)
 
-                    print('episode %d, epoch %.2f, iteration %d, avg. loss %.3f, avg. reward %.2f, avg. Q-value %.2f, training time %.2f, evaluation time %.2f, train epsilon %.5f' % (
+                    print('episode %d, epoch %.2f, iteration %d, avg. loss %.3f, eval. cumulative reward %.2f, avg. Q-value %.2f, training time %.2f, evaluation time %.2f, train epsilon %.5f' % (
                         episode_counter,self.iteration/float(memory.memory_size),
                         self.iteration,total_loss,total_reward,
                         total_qval_avg,total_train_time,total_eval_time,self.epsilon))
@@ -199,7 +206,7 @@ class DQNAgent(object):
         global_end = timer()
         learner.overall_time = global_end - global_start
         print('Overall training + evaluation time: '+ str(learner.overall_time))
-        self.save(learner,'./%s/learner_final.p' % self.save_dir)
+        self.save(learner,'%slearner_final.p' % self.save_dir)
 
 
     # one iteration in training or evaluation mode
@@ -304,7 +311,7 @@ class DQNAgent(object):
 
         end = timer()
 
-        total_reward /= eval_iterations
+        # total_reward /= eval_iterations
         total_loss /= eval_iterations
         total_qval_avg /= eval_iterations
 

@@ -20,13 +20,14 @@ from the location one step forward.
 '''
 
 import numpy as np
-import random
 import h5py
 
 class ReplayMemoryHDF5(object):
     ''' Wrapper around a replay dataset residing on disk as HDF5. '''
     
     def __init__(self, settings, filename='memory.hdf5', overwrite=True):
+
+        self.random_state = np.random.RandomState(settings['seed_memory'])
 
         if overwrite:
             self.fp = h5py.File(filename, 'w')
@@ -91,12 +92,12 @@ class ReplayMemoryHDF5(object):
                        % (batch_size, self.valid))
 
         # sampling without replacement
-        indices = random.sample(xrange(0, self.valid), batch_size)
+        indices = self.random_state.choice(xrange(0, self.valid), size=batch_size, replace=False).tolist()
 
         # can't include (head - 1)th state in sample because we don't know the next
         # state, so we simply resample; rare case if dataset is large
         while (self.head - 1) in indices:
-            indices = random.sample(xrange(0, self.valid), batch_size)
+            indices = self.random_state.choice(xrange(0, self.valid), size=batch_size, replace=False).tolist()
 
         indices.sort()  # slicing for hdf5 must be in increasing order
 

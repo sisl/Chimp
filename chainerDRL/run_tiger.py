@@ -31,11 +31,10 @@ settings = {
     'initial_exploration' : 10000,
     'epsilon_decay' : 0.0001, # subtract from epsilon every step
     'eval_epsilon' : 0.05, # epsilon used in evaluation, 0 means no random actions
+    'epsilon' : 1.0,  # Initial exploratoin rate
 
     # simulator settings
-    'epsilon' : 1.0,  # Initial exploratoin rate
     'viz' : False,
-    'model_dims' : (2,1), # size to which the image shall be cropped
 
     # replay memory settings
     'memory_size' : 100000,  # size of replay memory
@@ -53,20 +52,23 @@ settings = {
     'gpu' : False,
 
     # general
-    'seed' : 1234
+    'seed_general' : 1234,
+    'seed_simulator' : 1234,
+    'seed_agent' : 1234,
+    'seed_memory' : 1234
+
     }
 
 print(settings)
 
-np.random.seed(settings["seed"])
-
+np.random.seed(settings["seed_general"])
 
 print('Initializing replay memory...')
 memory = ReplayMemoryHDF5(settings)
 
 print('Setting up simulator...')
-pomdp = TigerPOMDP()
-simulator = POMDPSimulator(pomdp, settings)
+pomdp = TigerPOMDP( seed=settings['seed_simulator'] )
+simulator = POMDPSimulator(pomdp)
 
 print('Setting up networks...')
 
@@ -96,10 +98,10 @@ print('Training...')
 agent.train(learner, memory, simulator)
 
 print('Loading the net...')
-learner = agent.load('./nets_tiger/learner_final.p')
+learner = agent.load('./results/nets_tiger/learner_final.p')
 
 
-np.random.seed(359)
+np.random.seed(settings["seed_general"])
 
 print('Evaluating DQN agent...')
 print('(reward, MSE loss, mean Q-value, episodes - NA, time)')

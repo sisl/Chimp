@@ -3,7 +3,6 @@
 #################################################################
 
 import numpy as np
-import random
 from copy import deepcopy
 
 class Categorical():

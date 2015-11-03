@@ -7,6 +7,8 @@ import numpy as np
 class ReplayMemory(object):
 
     def __init__(self, settings):
+        
+        self.random_state = np.random.RandomState(settings['seed_memory'])
         self.memory_size = settings['memory_size']
         self.model_dims = settings['model_dims']
         self.n_frames = settings['n_frames']
@@ -20,7 +22,7 @@ class ReplayMemory(object):
     # function to sample a mini-batch
     def minibatch(self, batch_size):
         # sampling a mini-batch of the given size with replacement
-        ind = np.random.randint(0,min(self.counter,self.memory_size),batch_size)
+        ind = self.random_state.randint(0,min(self.counter,self.memory_size),batch_size)
         return self.data[0][ind], self.data[1][ind], self.data[2][ind], self.data[3][ind], self.data[4][ind]
 
     # function to store the observed experience and keep the count within the replay memory

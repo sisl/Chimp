@@ -1,5 +1,4 @@
 import numpy as np
-import random
 from copy import deepcopy
 from tools.belief import DiscreteBelief
 
@@ -10,9 +9,11 @@ from tools.belief import DiscreteBelief
 class TigerPOMDP():
 
     # constructor
-    def __init__(self, 
+    def __init__(self, seed=999,
                  rlisten=-1.0, rtiger=-100.0, rescape=10.0,
                  pcorrect=0.85, discount=0.95):
+
+        self.random_state = np.random.RandomState(seed)
         self.rlisten = rlisten
         self.rtiger = rtiger
         self.rescape = rescape
@@ -31,6 +32,10 @@ class TigerPOMDP():
 
         # belief
         self.belief = [1.0, 0.0]
+
+        # belief and observation shape
+        self.belief_shape = (2,1)
+        self.observation_shape = (1,1)
 
     ################################################################# 
     # Setters
@@ -125,7 +130,7 @@ class TigerPOMDP():
 
     # numpy categorical sampling hack
     def categorical(self, d):
-        return np.flatnonzero( np.random.multinomial(1,d,1) )[0]
+        return np.flatnonzero( self.random_state.multinomial(1,d,1) )[0]
 
     ################################################################# 
     # Create functions
@@ -145,7 +150,7 @@ class TigerPOMDP():
         return DiscreteBelief(self.n_states())
 
     def initial_state(self):
-        return random.randint(0,1)
+        return self.random_state.randint(2)
 
     ################################################################# 
     # Misc Functions

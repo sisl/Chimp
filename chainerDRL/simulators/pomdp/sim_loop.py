@@ -1,4 +1,4 @@
-import random 
+import numoy as np
 import sys
 from models.tiger import TigerPOMDP
 from models.simulator import POMDPSimulator
@@ -8,13 +8,12 @@ from models.simulator import POMDPSimulator
 #####################################################################
 
 # initialize pomdp
-pomdp = TigerPOMDP()
+pomdp = TigerPOMDP(seed=999)
 
 # initialize and pass the pomdp into simulator
 sim = POMDPSimulator(pomdp) # state and initial belief automatically initialized
 
-na = sim.n_actions() # number of actions-output layer size
-ns = sim.n_states() # number of states-input layer size
+sim.n_states # number of states-input layer size
 
 opt = pomdp.optimal_policy()
 
@@ -26,7 +25,7 @@ for i in range(steps):
     # get the initial state
     s = sim.get_screenshot()
     # pick random action
-    #ai = random.randint(0,na)
+    #ai = np.random.randint(sim.n_actions)
     # pick optimal aciton
     ai = opt(s) 
 

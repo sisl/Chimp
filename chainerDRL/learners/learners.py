@@ -22,6 +22,7 @@ class Learner(object):
         
         self.gpu = settings['gpu']
         if self.gpu:
+            cuda.get_device(0).use()
             self.net.to_gpu()
             print("Deep learning on GPU ...")
         else:
