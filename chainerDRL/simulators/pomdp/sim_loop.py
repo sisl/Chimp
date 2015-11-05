@@ -1,4 +1,4 @@
-import numoy as np
+import numpy as np
 import sys
 from models.tiger import TigerPOMDP
 from models.simulator import POMDPSimulator
@@ -11,7 +11,7 @@ from models.simulator import POMDPSimulator
 pomdp = TigerPOMDP(seed=999)
 
 # initialize and pass the pomdp into simulator
-sim = POMDPSimulator(pomdp) # state and initial belief automatically initialized
+sim = POMDPSimulator(pomdp, robs=True) # state and initial belief automatically initialized
 
 sim.n_states # number of states-input layer size
 
@@ -25,9 +25,9 @@ for i in range(steps):
     # get the initial state
     s = sim.get_screenshot()
     # pick random action
-    #ai = np.random.randint(sim.n_actions)
+    ai = np.random.randint(sim.n_actions)
     # pick optimal aciton
-    ai = opt(s) 
+    #ai = opt(s) 
 
     # progress simulation
     sim.act(ai)
@@ -36,7 +36,7 @@ for i in range(steps):
     r = sim.reward() # real valued reward
     sp = sim.get_screenshot() # pomdp state, this is a belief
 
-    print "Action ", ai, " Reward: ", r
+    print "Action ", ai, " Reward: ", r, " Screen Shot: ", sp
     print "Current State: ", sim.current_state, " Current Belief: ", sim.current_belief.bnew, "\n"
 
     rtot += r

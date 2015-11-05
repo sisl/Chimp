@@ -59,6 +59,7 @@ class POMDPSimulator():
 
         self.current_reward = r
         self.current_state = s
+        self.current_observation = o
 
     # returns the current simulator belief
     def get_screenshot(self):
