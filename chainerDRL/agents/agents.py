@@ -9,7 +9,6 @@ import os
 import numpy as np
 from copy import deepcopy
 import pickle
-import pygame
 import matplotlib.pyplot as plt
 
 from timeit import default_timer as timer
@@ -135,13 +134,13 @@ class DQNAgent(object):
                 local_counter += 1
 
                 if self.iteration % self.save_every == 0:
-                    print('Saving %snet_%d.p' % (self.save_dir,int(self.iteration)))
-                    self.save(learner.net,'%snet_%d.p' % (self.save_dir,int(self.iteration)))
+                    print('Saving %s/net_%d.p' % (self.save_dir,int(self.iteration)))
+                    self.save(learner.net,'%s/net_%d.p' % (self.save_dir,int(self.iteration)))
                     
                     global_end = timer()
                     learner.overall_time = global_end - global_start
                     print('Overall training + evaluation time: '+ str(learner.overall_time))
-                    self.save(learner,'%slearner_final.p' % self.save_dir)
+                    self.save(learner,'%s/learner_final.p' % self.save_dir)
 
                 if self.iteration % self.eval_every == 0:
 
@@ -206,7 +205,7 @@ class DQNAgent(object):
         global_end = timer()
         learner.overall_time = global_end - global_start
         print('Overall training + evaluation time: '+ str(learner.overall_time))
-        self.save(learner,'%slearner_final.p' % self.save_dir)
+        self.save(learner,'%s/learner_final.p' % self.save_dir)
 
 
     # one iteration in training or evaluation mode
