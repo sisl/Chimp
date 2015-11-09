@@ -14,35 +14,32 @@ from memories import ReplayMemoryHDF5
 from learners import Learner
 from agents import DQNAgent
 
-from simulators.atari import AtariSimulator
+from simulators.agar import AgarIODriver
 
 print('Setting training parameters...')
 # Set training settings
 settings = {
     # agent settings
     'batch_size' : 32, # mini-batch size
-    'print_every' : 5000, # print out update every 5000 iterations
-    'save_dir' : './results/nets_atari', # directory where we save the net
+    'print_every' : 100, # print out update every 5000 iterations
+    'save_dir' : './results/nets_agar', # directory where we save the net
     'iterations' : 10000000,
     'eval_iterations' : 5000,
     'eval_every' : 10000,
     'save_every' : 50000,
-    'initial_exploration' : 10000,
-    'epsilon_decay' : 1.0/10**6, # subtract 1.0/10**6 every step
+    'initial_exploration' : 1000,
+    'epsilon_decay' : 1.0/10**5, # subtract 1.0/10**6 every step
     'eval_epsilon' : 0.01, # epsilon used in evaluation, 0 means no random actions
 
     # Atari simulator settings
     'epsilon' : 1.0,  # Initial exploratoin rate
-    'frame_skip' : 4,
-    'viz' : False,
+    'viz' : True,
     'viz_cropped' : True, # visualize only what an agent sees? vs. the whole screen
-    'rom' : "Breakout.bin",
-    'rom_dir' : "./simulators/atari/roms",
     'model_dims' : (84,84), # size to which the image shall be cropped
     'pad' : 15, # padding parameter - for image cropping - only along the length of the image, to obtain a square
 
     # replay memory settings
-    'memory_size' : 100000,  # size of replay memory
+    'memory_size' : 10000,  # size of replay memory
     'n_frames' : 4,  # number of frames
 
     # learner settings
@@ -71,7 +68,7 @@ print('Initializing replay memory...')
 memory = ReplayMemoryHDF5(settings)
 
 print('Firing up Atari...')
-simulator = AtariSimulator(settings)
+simulator = AgarIODriver(settings)
 
 print('Setting up networks...')
 # Set random seed + parameters that define the network (you cannot pass the network a random number generator)
@@ -106,7 +103,7 @@ print('Training...')
 agent.train(learner, memory, simulator)
 
 print('Loading the net...')
-learner = agent.load('./results/nets_atari/learner_final.p')
+learner = agent.load('./results/nets_agar/learner_final.p')
 
 print('Evaluating DQN agent...')
 print('(reward, MSE loss, mean Q-value, episodes)')
