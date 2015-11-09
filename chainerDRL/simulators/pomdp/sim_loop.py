@@ -8,10 +8,10 @@ from models.simulator import POMDPSimulator
 #####################################################################
 
 # initialize pomdp
-pomdp = TigerPOMDP(seed=999)
+pomdp = TigerPOMDP(seed=1)
 
 # initialize and pass the pomdp into simulator
-sim = POMDPSimulator(pomdp, robs=True) # state and initial belief automatically initialized
+sim = POMDPSimulator(pomdp) # state and initial belief automatically initialized
 
 sim.n_states # number of states-input layer size
 
@@ -25,9 +25,9 @@ for i in range(steps):
     # get the initial state
     s = sim.get_screenshot()
     # pick random action
-    ai = np.random.randint(sim.n_actions)
+    #ai = np.random.randint(sim.n_actions)
     # pick optimal aciton
-    #ai = opt(s) 
+    ai = opt(s) 
 
     # progress simulation
     sim.act(ai)

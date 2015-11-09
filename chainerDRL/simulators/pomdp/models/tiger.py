@@ -9,9 +9,11 @@ from tools.belief import DiscreteBelief
 class TigerPOMDP():
 
     # constructor
-    def __init__(self, seed=999,
-                 rlisten=-1.0, rtiger=-100.0, rescape=10.0,
-                 pcorrect=0.85, discount=0.95):
+    def __init__(self, 
+                 seed=999, # random seed
+                 rlisten=-1.0, rtiger=-100.0, rescape=10.0, # reward values
+                 pcorrect=0.85, # correct observation prob
+                 discount=0.95): # discount
 
         self.random_state = np.random.RandomState(seed)
         self.rlisten = rlisten
@@ -28,10 +30,6 @@ class TigerPOMDP():
 
         # observations arrs
         self.tobs = [0, 1] # observed on the left, observed on the right
-        self.oprobs = [1.0, 0.0]
-
-        # belief
-        self.belief = [1.0, 0.0]
 
         # belief and observation shape
         self.belief_shape = (2,1)
@@ -82,9 +80,7 @@ class TigerPOMDP():
     # Distribution Functions
     ################################################################# 
     # returns the transtion distriubtion of s' from the (s,a) pair
-    def transition(self, s, a, dist = None):
-        if dist == None:
-            dist = self.create_transition_distribution()
+    def transition(self, s, a, dist):
         if a == 0 or a == 1:
             dist[0] = 0.5
             dist[1] = 0.5
@@ -102,9 +98,7 @@ class TigerPOMDP():
         return self.tstates[sidx]
 
     # returns the observation dsitribution of o from the (s,a) pair
-    def observation(self, s, a, dist = None):
-        if dist == None:
-            dist = self.create_observation_distribution()
+    def observation(self, s, a, dist):
         p = self.pcorrect
         if a == 2:
             if s == 0:
@@ -124,7 +118,11 @@ class TigerPOMDP():
         return self.tobs[oidx]
 
     # pdf should be in a distributions module
-    def pdf(self, d, dval):
+    def transition_pdf(self, d, dval):
+        assert dval < 2, "Attempting to retrive pdf value larger than state size"
+        return d[dval]
+
+    def observation_pdf(self, d, dval):
         assert dval < 2, "Attempting to retrive pdf value larger than state size"
         return d[dval]
 

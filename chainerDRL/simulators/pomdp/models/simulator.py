@@ -29,14 +29,6 @@ class POMDPSimulator():
         else:
             self.model_dims = self.pomdp.observation_shape
 
-    # returns the number of actions
-    #def n_actions(self):
-    #    return self.pomdp.n_actions()
-
-    # returns the number of states
-    #def n_states(self):
-    #    return self.pomdp.n_states()
-
     # progress single step in simulation
     def act(self, ai):
         pomdp = self.pomdp
@@ -49,10 +41,10 @@ class POMDPSimulator():
 
         r = pomdp.reward(s, a)
         
-        tdist = pomdp.transition(s, a, dist = tdist)
+        tdist = pomdp.transition(s, a, tdist)
         s = pomdp.sample_state(tdist)
 
-        odist = pomdp.observation(s, a, dist = odist)
+        odist = pomdp.observation(s, a, odist)
         o = pomdp.sample_observation(odist)
 
         b.update(pomdp, a, o)
