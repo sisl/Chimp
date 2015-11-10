@@ -38,6 +38,9 @@ sudo python setup.py install
 cd ..
 
 
+# git clone -b dev https://github.com/mcmachado/Arcade-Learning-Environment/ ale_dev
+
+
 # INSTALL NVIDIA DRIVERS
 
 sudo apt-get -y update && sudo apt-get -y upgrade
