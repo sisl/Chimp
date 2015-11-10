@@ -10,10 +10,7 @@ import numpy as np
 from copy import deepcopy
 import pickle
 import matplotlib.pyplot as plt
-
 from timeit import default_timer as timer
-# from time import clock
-
 
 class DQNAgent(object):
 
@@ -38,46 +35,57 @@ class DQNAgent(object):
         self.save_dir = settings['save_dir']
         self.save_every = settings['save_every']
 
-    # helper function to save net (or any object)
+
+    '''Helper functions to load / save objects'''
+
     def save(self,obj,name):
         pickle.dump(obj, open(name, "wb"))
 
-    # helper function to load net (or any object)
     def load(self,name):
         return pickle.load(open(name, "rb"))
 
-    # helper function to load a pre-trained net
     def load_net(self,learner,name):
         net = self.load(name)
         learner.load_net(net)
 
-    # masking function for learner policy - for e-greedy simulator action selection
     def policy(self, learner, simulator, s, epsilon = 0):
+        '''e-greedy policy'''
         if self.random_state.rand() < epsilon:
             opt_a = self.random_state.randint(0, simulator.n_actions)
         else:
             opt_a = learner.policy(s)
         return opt_a
 
-    # get state
+
     def get_state(self, simulator):
-        # get screenshot
+        '''update current state with a new observation'''
+
         self.frame = simulator.get_screenshot().reshape(simulator.model_dims)
 
-        # add screenshot to the state to the 
         ind = [i+1 for i in xrange(self.n_frames - 1)]
         tmp = []
         for i in ind:
             tmp.append(self.state[0][i])
         tmp.append(self.frame)
+
         self.state = np.asanyarray(tmp, dtype=np.float32).reshape(1, self.n_frames, 
             simulator.model_dims[0], simulator.model_dims[1])
+
         return self.state.copy()
 
-    # launch training process
-    def train(self, learner, memory, simulator):
 
-        # create "nets" directory to save training output
+    def reset_episode(self, simulator, initial=False):
+        '''reset episode'''
+
+        if not initial:
+            simulator.reset_episode()
+        self.state = -1*np.ones((1, self.n_frames, simulator.model_dims[0], simulator.model_dims[1]), dtype=np.float32)
+        self.s0 = self.get_state(simulator)
+
+
+    def train(self, learner, memory, simulator):
+        '''training'''
+
         if not os.path.exists(self.save_dir):
             print("Creating '%s' directory to store training results..." % self.save_dir)
             os.makedirs(self.save_dir)
@@ -85,16 +93,12 @@ class DQNAgent(object):
         if learner.clip_reward:
             print("Rewards are clipped in training, but not in evaluation")
 
-        # initialize visualization display
         if self.viz:
             simulator.init_viz_display()
 
         print("Running initial exploration for " + str(self.initial_exploration) + " screen transitions...")
 
-        # setting initial state that will last trough one episode
-        self.state = np.zeros((1, self.n_frames, simulator.model_dims[0], simulator.model_dims[1]), dtype=np.float32)
-        self.s0 = self.get_state(simulator)
-
+        self.reset_episode(simulator, initial=True)
         self.iteration = 0
 
         total_reward = 0.0
@@ -146,7 +150,6 @@ class DQNAgent(object):
 
                     end_training = timer()
 
-                    # total_reward /= local_counter
                     total_loss /= local_counter
                     total_qval_avg /= local_counter
                     total_train_time = end_training - max(end_exploration,end_evaluation)
@@ -161,9 +164,7 @@ class DQNAgent(object):
                     total_qval_avg = 0
                     local_counter = 0
 
-                    simulator.reset_episode()
-                    self.state = np.zeros((1, self.n_frames, simulator.model_dims[0], simulator.model_dims[1]), dtype=np.float32)
-                    self.s0 = self.get_state(simulator)
+                    self.reset_episode(simulator)
 
                     for i in xrange(self.eval_iterations):
 
@@ -176,7 +177,6 @@ class DQNAgent(object):
 
                     end_evaluation = timer()
 
-                    # total_reward /= local_counter
                     total_loss /= local_counter
                     total_qval_avg /= local_counter
                     total_eval_time = (end_evaluation - end_training)
@@ -196,9 +196,7 @@ class DQNAgent(object):
                     total_qval_avg = 0
                     local_counter = 0
 
-                    simulator.reset_episode()
-                    self.state = np.zeros((1, self.n_frames, simulator.model_dims[0], simulator.model_dims[1]), dtype=np.float32)
-                    self.s0 = self.get_state(simulator)
+                    self.reset_episode(simulator)
 
             self.iteration += 1
 
@@ -208,21 +206,20 @@ class DQNAgent(object):
         self.save(learner,'%s/learner_final.p' % self.save_dir)
 
 
-    # one iteration in training or evaluation mode
     def perceive(self, learner, memory, simulator, train=True, initial_exporation=False, custom_policy=None):
+        '''one iteration in training or evaluation mode'''
 
         loss = 0
         qval_avg = 0
         episode = 0
 
-        # INTERACTING WITH THE SIMULATOR AND STORING THE EXPERIENCE
-        # getting observation and forming the state
+        # get an action depending on a situation
         if train and initial_exporation:
             self.a = self.policy(learner, simulator, self.s0, epsilon = 1)
         elif train and not initial_exporation:
             self.a = self.policy(learner, simulator, self.s0, epsilon = self.epsilon)
         elif not train and custom_policy:
-            self.a = custom_policy(self.s0.squeeze())
+            self.a = custom_policy(self.s0.squeeze()[-1])
         elif not train and not custom_policy:
             self.a = self.policy(learner, simulator, self.s0, epsilon = self.eval_epsilon)
 
@@ -230,8 +227,7 @@ class DQNAgent(object):
         self.reward = float(simulator.reward());
         self.s1 = self.get_state(simulator)
 
-        # move the image to the screen / shut down the game if display is closed
-        if self.viz:
+        if self.viz: # move the image to the screen / shut down the game if display is closed
             simulator.refresh_viz_display()
 
         if train:
@@ -240,60 +236,49 @@ class DQNAgent(object):
 
             if not initial_exporation:
                 
-                # sample a minibatch
                 self.s0_mb,self.a_mb,self.reward_mb,self.s1_mb,self.end_mb = memory.minibatch(self.batch_size)
 
-                # run an update self.iteration on one mini-batch
                 batch_approx_q_all, batch_loss, batch_qval_avg = learner.gradUpdate(
                     self.s0_mb,self.a_mb,self.reward_mb,self.s1_mb,self.end_mb)
 
                 loss = batch_loss
                 qval_avg = batch_qval_avg
 
-                # copy a net every fixed number of steps
                 if self.iteration % learner.target_net_update == 0:
                     learner.net_to_target_net()
 
-                # discount the randomization constant
                 self.epsilon -= self.epsilon_decay
                 if self.epsilon < 0.1:
                     self.epsilon = 0.1
 
         elif not train and not custom_policy: # DQN evaluation
 
-            # calculate loss and other metrics on the observed tuple
-            batch_approx_q_all, batch_loss, batch_qval_avg = learner.forwardLoss(
+            batch_approx_q_all, batch_loss, batch_qval_avg = learner.forwardLoss(   # evaluation on one observation
                 self.s0,self.a,self.reward,self.s1,simulator.episode_over())
 
             loss = batch_loss
             qval_avg = batch_qval_avg
 
-        self.s0 = self.s1 # s1 now is s0 during next turn
+        self.s0 = self.s1   # s1 now is s0 during the next turn
 
         if simulator.episode_over():
             episode += 1
-
-            simulator.reset_episode()
-            # setting initial state that will last trough one episode
-            self.state = np.zeros((1, self.n_frames, simulator.model_dims[0], simulator.model_dims[1]), dtype=np.float32)
-            self.s0 = self.get_state(simulator)
+            self.reset_episode(simulator)
 
         return self.reward, loss, qval_avg, episode
 
 
-    # function to evaluate own and custom policies
     def evaluate(self, learner, simulator, eval_iterations=5000, custom_policy=None):
+        '''evaluate policy - once all training has finished'''
 
         if self.viz:
             simulator.init_viz_display()
 
-        self.state = np.zeros((1, self.n_frames, simulator.model_dims[0], simulator.model_dims[1]), dtype=np.float32)
-        self.s0 = self.get_state(simulator)
+        self.reset_episode(simulator)
 
         total_reward = 0
         total_loss = 0
         total_qval_avg = 0
-
         episode_counter = 0
 
         start = timer()
@@ -305,16 +290,14 @@ class DQNAgent(object):
             total_reward += reward
             total_loss += loss
             total_qval_avg += qval_avg
-
             episode_counter += episode
 
         end = timer()
 
-        # total_reward /= eval_iterations
         total_loss /= eval_iterations
         total_qval_avg /= eval_iterations
 
-        simulator.reset_episode()
+        self.reset_episode(simulator)
 
         return total_reward, total_loss, total_qval_avg, episode_counter,  end - start
 
