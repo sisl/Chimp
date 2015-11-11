@@ -1,6 +1,8 @@
 import numpy as np
 from copy import deepcopy
-from tools.belief import DiscreteBelief
+from tools.belief_momdp import MOMDPBelief
+import math
+import itertools
 
 #################################################################
 # Implements the Rock Sample POMDP problem
@@ -14,8 +16,8 @@ class RockSamplePOMDP():
                  ys=8, # size of grid x dim
                  rocks={(1,2):False, (3,4):True}, # rock locations and types
                  seed=999, # random seed
-                 rbad=-10.0, rgood=10.0, rexit=10.0, # reward values
-                 eta=0.5, # quality of rover observation,
+                 rbad=-10.0, rgood=10.0, rexit=10.0, rbump=-100.0, # reward values
+                 d0=10, # quality of rover observation,
                  discount=0.99):
         
         self.random_state = np.random.RandomState(seed) # used for sampling
@@ -25,18 +27,22 @@ class RockSamplePOMDP():
         self.ys = ys # x-size of the grid
 
         self.rocks = rocks # dictionary mapping rock positions to their types (x,y) => good or bad
+        self.rock_pos = [k for k in sorted(rocks.keys())]
+        self.rock_types = [rocks[k] for k in sorted(rocks.keys())]
         k = len(rocks)
         self.k = k # number of rocks
 
         self.rbad = rbad
         self.rgood = rgood
+        self.rbump = rbump
         self.rexit = rexit
 
         # states: state is represented by the rover position and the rock types
-        self.rover_states = [i for i in range(xs*ys)] # fully observable vars
-        self.rock_states = [i for i in range(2**k)] # partially observable vars
-        self.n_rock_states = xs*ys
-        self.n_rover_states = 2**k
+        self.rover_states = [(j,i) for i in range(xs) for j in range(ys)] # fully observable vars
+        rs = itertools.product(*(xrange(2) for i in xrange(k)))
+        self.rock_states = [[bool(j) for j in i] for i in rs]
+        self.n_rock_states = len(self.rock_states)
+        self.n_rover_states = len(self.rover_states)
         
         # actions: total of 5+k
         self.ractions = [0, # move left
@@ -48,12 +54,20 @@ class RockSamplePOMDP():
             self.ractions.append(5+i) # sample rock i
 
         # observations
-        self.robs = [0, 1, 2] # none, good, bad
+        self.robs = [0, # none
+                     1, # good
+                     2] # bad
 
         # pre-allocate state variables
         self.rover_state = np.zeros(2) # rover (x,y) position
         self.rock_state = np.zeros(k, dtype=np.bool) # (good, bad) type for each rock
 
+        self.d0 = d0
+
+        # belief and observation shape
+        self.belief_shape = (self.n_rock_states,1)
+        self.fully_obs_shape = (2,1)
+        self.observation_shape = (1,1)
 
 
     ################################################################# 
@@ -91,6 +105,7 @@ class RockSamplePOMDP():
         # Rewarded:
         # sampling good or bad rocks
         # exiting the map
+        # trying to move off the grid
         rocks = self.rocks
         xpos, ypos = x
 
@@ -100,6 +115,9 @@ class RockSamplePOMDP():
         # if exit get exit reward
         if a == 1 and xpos == self.xs:
             return self.rexit 
+        # if trying to move off the grid
+        if (a == 0 and xpos == 0) or (a == 2 and ypos == self.ys) or (a == 3 and ypos == 0):
+            return self.rbump
         # if trying to sample
         if a == 4:
             # if in a space with a rock
@@ -117,16 +135,16 @@ class RockSamplePOMDP():
     ################################################################# 
     # rover moves determinisitcally: distribution is just the position of rover 
     def fully_obs_transition(self, x, y, a, dist):
-        xpos = dist[0]
-        ypos = dist[1]
+        xpos = x[0]
+        ypos = x[1]
         # going left
         if a == 0 and xpos > 0:
             xpos -= 1
         # going right
-        elif a == 1 and xpos < (xs+1):
+        elif a == 1 and xpos < (self.xs+1):
             xpos += 1
         # going up
-        elif a == 2 and ypos < ys:
+        elif a == 2 and ypos < self.ys:
             ypos += 1
         # going down
         elif a == 3 and ypos > 0:
@@ -137,12 +155,14 @@ class RockSamplePOMDP():
 
     # the positions of rocks or their types (good or bad) don't change
     def partially_obs_transition(self, x, y, a, dist):
+        for i in xrange(len(y)):
+            dist[i] = y[i]
         return dist
 
     # sample the transtion distribution 
     def sample_fully_obs_state(self, d):
         # deterministic transition
-        return d 
+        return (d[0], d[1]) 
 
     def sample_partially_obs_state(self, d):
         # rock states do not change
@@ -150,17 +170,56 @@ class RockSamplePOMDP():
 
     # returns the observation dsitribution of o from the (s,a) pair
     def observation(self, x, y, a, dist):
+        prob = 0.0
+        # if the action checks a rock 
+        if self.is_check_action(a):
+            xpos = x[0]
+            ypos = x[1]
 
+            ri = self.act2rock(a) # rock index
+            rock_pos = self.rock_pos[ri] # rock position
+            rock_type = y[ri] # rock type
+
+            r = math.sqrt((xpos - rock_pos[0])**2 + (ypos - rock_pos[1])**2) 
+            eta = math.exp(-r/self.d0)
+            p_correct = 0.5 + 0.5 * eta # probability of correct measure
+
+            dist.fill(0.0)
+            # if rock is good
+            if rock_type == True:
+                dist[1] = p_correct
+                dist[2] = 1.0 - p_correct
+            # rock is bad
+            else:
+                dist[1] = 1 - p_correct
+                dist[2] = p_correct
+        else:
+            dist.fill(0.0)
+            dist[0] = 1.0
+        return dist
 
 
     # sample the observation distirbution
     def sample_observation(self, d):
         oidx = self.categorical(d)
-        return self.tobs[oidx]
+        return self.robs[oidx]
 
-    # pdf should be in a distributions module
-    def pdf(self, d, dval):
-        assert dval < 2, "Attempting to retrive pdf value larger than state size"
+    def fully_obs_transition_pdf(self, d, x): 
+        if d[0] == x[0] and d[1] == x[1]:
+            return 1.0
+        else:
+            return 0.0
+
+    # only single rock configuration, always return 1
+    def partially_obs_transition_pdf(self, d, y):
+        if y == d:
+            return 1.0
+        else:
+            return 0.0
+
+    # pdf for observation prob
+    def observation_pdf(self, d, dval):
+        assert dval < 3, "Attempting to retrive pdf value larger than observation size"
         return d[dval]
 
     # numpy categorical sampling hack
@@ -176,25 +235,24 @@ class RockSamplePOMDP():
         return td
 
     def create_partially_obs_transition_distribution(self):
-        td = deepcopy(self.rocks)
-        return td
+        return deepcopy(self.rock_types)
 
     def create_observation_distribution(self):
-        od = np.array([0.5, 0.5]) # good or bad rock
+        od = np.zeros(3) + 1.0/3 # none, good, bad 
         return od
 
     def create_belief(self):
-        return DiscreteBelief(self.n_states())
+        return MOMDPBelief(self.n_rock_states)
 
     def initial_belief(self):
-        return DiscreteBelief(self.n_states())
+        return MOMDPBelief(self.n_rock_states)
 
     def initial_fully_obs_state(self):
         # returns a (0, y) tuple
         return (0, self.random_state.randint(self.xs+1))
 
     def initial_partially_obs_state(self):
-        return deepcopy(self.rocks)
+        return deepcopy(self.rock_types)
 
 
     ################################################################# 
@@ -210,11 +268,17 @@ class RockSamplePOMDP():
     def index2action(self, ai):
         return ai
 
+    def is_check_action(self, a):
+        return True if a > 4 else False
+
+    def act2rock(self, a):
+        return a - 5
+
     def n_states(self):
         return 2
 
     def n_actions(self):
-        return 3
+        return len(self.ractions)
 
     def n_obsevations(self):
         return 2
