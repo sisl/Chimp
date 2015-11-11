@@ -23,20 +23,15 @@ for i in xrange(steps):
     s = sim.get_screenshot()
     # pick random action
     ai = np.random.randint(sim.n_actions)
-
     # progress simulation
     sim.act(ai)
-
     # get reward and next states
     r = sim.reward() # real valued reward
     sp = sim.get_screenshot() # pomdp state, this is a belief
-
     print "Time Step: ", i
     print "Action ", ai, " Reward: ", r, " Screen Shot: ", sp
     print "Current X State: ", sim.current_xstate, " Current Y State: ", sim.current_ystate, " Current Belief: ", sim.current_belief.bnew, "\n"
-
     rtot += r
-
     # check if reached terminal state
     if sim.episode_over():
         print "\n\nResetting Episode\n\n"

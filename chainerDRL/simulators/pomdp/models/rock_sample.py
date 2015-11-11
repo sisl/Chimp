@@ -13,8 +13,9 @@ class RockSamplePOMDP():
     # constructor
     def __init__(self, 
                  xs=7, # size of grid y dim
-                 ys=8, # size of grid x dim
-                 rocks={(1,2):False, (3,4):True}, # rock locations and types
+                 ys=7, # size of grid x dim
+                 rocks={(2,0):False, (0,1):True, (3,1):False, (6,3):True, (2,4):False, (3,4):True, (5,5):False,
+                     (1,6):True}, # rock locations and types
                  seed=1, # random seed
                  rbad=-10.0, rgood=10.0, rexit=10.0, rbump=-100.0, # reward values
                  d0=10, # quality of rover observation,
@@ -23,8 +24,8 @@ class RockSamplePOMDP():
         self.random_state = np.random.RandomState(seed) # used for sampling
         self.discount = discount
 
-        self.xs = xs # y-size of the grid
-        self.ys = ys # x-size of the grid
+        self.xs = xs - 1 # y-size of the grid
+        self.ys = ys - 1 # x-size of the grid
 
         self.rocks = rocks # dictionary mapping rock positions to their types (x,y) => good or bad
         self.rock_pos = [k for k in sorted(rocks.keys())]
@@ -79,7 +80,6 @@ class RockSamplePOMDP():
         self.rgood = rg
         self.rbad = rb
         self.rexit = re
-
 
     ################################################################# 
     # S, A, O Spaces
@@ -250,13 +250,16 @@ class RockSamplePOMDP():
         return (0, self.random_state.randint(self.xs+1))
 
     def initial_partially_obs_state(self):
+        for (i, k) in enumerate(sorted(self.rocks.keys())):
+            t = bool(self.random_state.randint(2))
+            self.rock_types[i] = t 
+            self.rocks[k] = t
         return deepcopy(self.rock_types)
 
 
     ################################################################# 
     # Misc Functions
     ################################################################# 
-
     def isterminal(self, x, y):
         xpos, ypos = x
         if xpos > self.xs:
