@@ -13,7 +13,7 @@ from copy import deepcopy
 
 import pickle # used to save the nets
 
-class Learner(object):
+class LearnerAHist(object):
 
     def __init__(self, net, forward, settings):
 
@@ -72,7 +72,7 @@ class Learner(object):
         self.overall_time = 0
 
     # sampling of one mini-batch and one update using it
-    def gradUpdate(self, s0, a, r, s1, episode_end_flag):
+    def gradUpdate(self, s0, ahist0, a, r, s1, ahist1, episode_end_flag):
 
         if self.clip_reward:
             r = np.clip(r,-self.clip_reward,self.clip_reward)
@@ -82,7 +82,7 @@ class Learner(object):
 
         # move forward through the net and produce output variable 
         # containing the loss gradient + MSE loss + average Q-value for taken actions
-        approx_q_all, loss, qval_avg = self.forwardLoss(s0, a, r, s1, episode_end_flag)
+        approx_q_all, loss, qval_avg = self.forwardLoss(s0, ahist0, a, r, s1, ahist1, episode_end_flag)
 
         # propagate the loss gradient through the net
         approx_q_all.backward()
@@ -93,18 +93,21 @@ class Learner(object):
         return approx_q_all, loss, qval_avg
 
     # function to get net output and to calculate the loss
-    def forwardLoss(self, s0, a, r, s1, episode_end_flag):
+    def forwardLoss(self, s0, ahist0, a, r, s1, ahist1, episode_end_flag):
 
         if self.gpu:
             s0 = cuda.to_gpu(s0)
             s1 = cuda.to_gpu(s1)
+            ahist0 = cuda.to_gpu(ahist0)
+            ahist1 = cuda.to_gpu(ahist1)
 
         # transfer states into Chainer format
         s0, s1 = chainer.Variable(s0), chainer.Variable(s1, volatile = True)
+        ahist0, ahist1 = chainer.Variable(ahist0), chainer.Variable(ahist1, volatile = True)
 
         # calculate target Q-values (from s1 and on)
         if not self.double_DQN:
-            target_q_all = self.forward(self.target_net, s1)
+            target_q_all = self.forward(self.target_net, s1, ahist1)
             if self.gpu:
                 target_q_max = np.max(target_q_all.data.get(), 1)
             else:
@@ -113,14 +116,14 @@ class Learner(object):
         else:
             # when we do double Q-learning
             # use the current network to determine optimal action in the next state (argmax)
-            target_q_all = self.forward(self.net, s1)
+            target_q_all = self.forward(self.net, s1, ahist1)
             if self.gpu:
                 target_argmax = np.argmax(target_q_all.data.get(), 1)
             else:
                 target_argmax = np.argmax(target_q_all.data, 1)
 
             # use the target network to determine the value of the selected optimal action in the next state
-            target_q_all = self.forward(self.target_net, s1)
+            target_q_all = self.forward(self.target_net, s1, ahist1)
             if self.gpu:
                 target_q_max = target_q_all.data.get()[np.arange(target_q_all.data.shape[0]),target_argmax]
             else:
@@ -131,7 +134,7 @@ class Learner(object):
         target_q_value = r + self.discount * target_q_max * (1-1*episode_end_flag)
 
         # calculate expected Q-values for all actions
-        approx_q_all = self.forward(self.net, s0)
+        approx_q_all = self.forward(self.net, s0, ahist0)
 
         # extract expected Q-values for the actions we actually took
         if self.gpu:
@@ -159,14 +162,16 @@ class Learner(object):
         return approx_q_all, np.mean(gradLoss**2), np.mean(approx_q_value)
 
     # extract the optimal policy in the given state
-    def policy(self, s):
+    def policy(self, s, ahist):
 
         if self.gpu:
             s = cuda.to_gpu(s)
+            ahist = cuda.to_gpu(ahist)
         s = chainer.Variable(s, volatile = True)
+        ahist = chainer.Variable(ahist, volatile = True)
 
         # get all Q-values for given state(s)
-        approx_q_all = self.forward(self.net, s)
+        approx_q_all = self.forward(self.net, s, ahist)
 
         # pick actions that maximize Q-values in each state
         if self.gpu:

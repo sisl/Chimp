@@ -12,9 +12,9 @@ and function names will change. See README.md for the steps to update this scrip
 '''
 from burp import IBurpExtender, IProxyListener
 
-# Eg: `P = Math.max(P, Db());
-PREVIOUS_SCORE_VARIABLE_NAME = 'P'
-GET_CURRENT_SCORE_FUNCTION_NAME = 'Db'
+# Eg: `K=Math.max(K,Eb());
+PREVIOUS_SCORE_VARIABLE_NAME = 'K'
+GET_CURRENT_SCORE_FUNCTION_NAME = 'Eb'
 
 class BurpExtender(IBurpExtender):
 
