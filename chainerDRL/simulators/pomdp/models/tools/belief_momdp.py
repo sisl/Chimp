@@ -46,7 +46,6 @@ class MOMDPBelief():
                 tdp = pomdp.partially_obs_transition(x, y, a, tdp)
                 pp = pomdp.partially_obs_transition_pdf(tdp, yp)
                 b_sum += pp * bold[j]
-                print "yp: ", yp, "y: ", y, "tdp: ", tdp, "pp: ", pp
             bnew[i] = probo * b_sum
         norm = sum(bnew)
         for i in xrange(self.length()):

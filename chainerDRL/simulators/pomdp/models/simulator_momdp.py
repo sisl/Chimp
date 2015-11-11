@@ -24,16 +24,16 @@ class MOMDPSimulator():
 
         self.od = pomdp.create_observation_distribution()
 
-        self.n_actions = self.pomdp.n_actions()
-        self.n_xstates = self.pomdp.n_states()
-        self.n_ystates = self.pomdp.n_states()
+        self.n_actions = pomdp.n_actions()
+        self.n_xstates = pomdp.n_xstates()
+        self.n_ystates = pomdp.n_ystates()
 
-        self.x_b_state = np.zeros(pomdp.belief_shape[0] + pomdp.fully_obs_shape[0])
+        self.x_b_state = np.zeros(pomdp.xdims + pomdp.n_ystates())
 
         if not robs:
-            self.model_dims = (pomdp.belief_shape[0]+pomdp.fully_obs_shape[0], 1)
+            self.model_dims = (pomdp.xdims+pomdp.n_ystates(), 1)
         else:
-            self.model_dims = pomdp.observation_shape
+            self.model_dims = (odims, 1) 
 
     # progress single step in simulation
     def act(self, ai):
@@ -43,7 +43,7 @@ class MOMDPSimulator():
         b = self.current_belief
         tdx = self.tdx
         tdy = self.tdy
-        odist = self.odist
+        od = self.od
 
         a = pomdp.index2action(ai)
 
@@ -54,8 +54,8 @@ class MOMDPSimulator():
         x = pomdp.sample_fully_obs_state(tdx)
         y = pomdp.sample_partially_obs_state(tdy)
 
-        odist = pomdp.observation(x, y, a, odist)
-        o = pomdp.sample_observation(odist)
+        od = pomdp.observation(x, y, a, od)
+        o = pomdp.sample_observation(od)
 
         b.update(pomdp, x, a, o)
 
@@ -71,11 +71,11 @@ class MOMDPSimulator():
         else:
             sc = self.x_b_state
             b = self.current_belief.new_belief()
-            nx = self.n_xstates
-            ny = self.n_ystates
+            nx = self.pomdp.xdims
+            nb = self.n_ystates
             for i in xrange(nx):
                 sc[i] = self.current_xstate[i]
-            for i in xrange(ny):
+            for i in xrange(nb):
                 sc[i+nx] = b[i]
             return sc
 
@@ -85,10 +85,11 @@ class MOMDPSimulator():
 
     # check if reached terminal states
     def episode_over(self):
-        return self.pomdp.isterminal(self.current_state)
+        return self.pomdp.isterminal(self.current_xstate, self.current_ystate)
 
     def reset_episode(self):
         pomdp = self.pomdp
-        self.current_state = pomdp.initial_state()
+        self.current_xstate = pomdp.initial_fully_obs_state()
+        self.current_ystate = pomdp.initial_partially_obs_state()
         self.current_belief = pomdp.initial_belief()
 

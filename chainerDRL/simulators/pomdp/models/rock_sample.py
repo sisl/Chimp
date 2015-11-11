@@ -15,7 +15,7 @@ class RockSamplePOMDP():
                  xs=7, # size of grid y dim
                  ys=8, # size of grid x dim
                  rocks={(1,2):False, (3,4):True}, # rock locations and types
-                 seed=999, # random seed
+                 seed=1, # random seed
                  rbad=-10.0, rgood=10.0, rexit=10.0, rbump=-100.0, # reward values
                  d0=10, # quality of rover observation,
                  discount=0.99):
@@ -64,11 +64,9 @@ class RockSamplePOMDP():
 
         self.d0 = d0
 
-        # belief and observation shape
-        self.belief_shape = (self.n_rock_states,1)
-        self.fully_obs_shape = (2,1)
-        self.observation_shape = (1,1)
-
+        # belief and observation dimensions
+        self.xdims = 2
+        self.odims = 1
 
     ################################################################# 
     # Setters
@@ -274,8 +272,11 @@ class RockSamplePOMDP():
     def act2rock(self, a):
         return a - 5
 
-    def n_states(self):
-        return 2
+    def n_xstates(self):
+        return len(self.rover_states)
+
+    def n_ystates(self):
+        return len(self.rock_states)
 
     def n_actions(self):
         return len(self.ractions)
