@@ -33,7 +33,7 @@ class MOMDPSimulator():
         if not robs:
             self.model_dims = (pomdp.xdims+pomdp.n_ystates(), 1)
         else:
-            self.model_dims = (odims, 1) 
+            self.model_dims = (pomdp.odims, 1) 
 
     # progress single step in simulation
     def act(self, ai):
