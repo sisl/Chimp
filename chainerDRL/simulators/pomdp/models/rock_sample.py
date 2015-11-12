@@ -319,9 +319,9 @@ class RockSamplePOMDP():
             ri = b.argmax() # index of highest confidence rock state 
             y = self.rock_states[ri] # rock state
             # find closest good rock
+            c = float('inf')
+            ci = -1
             for (i, t) in enumerate(y):
-                c = float('inf')
-                ci = 0
                 # if rock is good
                 if t:
                     # if on the rock sample
@@ -334,7 +334,8 @@ class RockSamplePOMDP():
                     if dist < c:
                         c = dist
                         ci = i
-            return self.move_to(x, self.rock_pos[ci])
+            if ci > -1:
+                return self.move_to(x, self.rock_pos[ci])
         # if no good rocks left move right
         return 1
                     
