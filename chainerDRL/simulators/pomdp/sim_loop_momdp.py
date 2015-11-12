@@ -29,8 +29,8 @@ for i in xrange(steps):
     r = sim.reward() # real valued reward
     sp = sim.get_screenshot() # pomdp state, this is a belief
     print "Time Step: ", i
-    print "Action ", ai, " Reward: ", r, " Screen Shot: ", sp
-    print "Current X State: ", sim.current_xstate, " Current Y State: ", sim.current_ystate, " Current Belief: ", sim.current_belief.bnew, "\n"
+    print "Action ", ai, " Reward: ", r, " Current X State: ", sim.current_xstate, " Current Y State: ", sim.current_ystate, "\n"
+    print "Screen shot: ", sp
     rtot += r
     # check if reached terminal state
     if sim.episode_over():

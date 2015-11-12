@@ -30,6 +30,7 @@ class RockSamplePOMDP():
         self.rocks = rocks # dictionary mapping rock positions to their types (x,y) => good or bad
         self.rock_pos = [k for k in sorted(rocks.keys())]
         self.rock_types = [rocks[k] for k in sorted(rocks.keys())]
+        self.rock_map = {(k):i for (i, k) in enumerate(sorted(rocks.keys()))}
         k = len(rocks)
         self.k = k # number of rocks
 
@@ -153,8 +154,18 @@ class RockSamplePOMDP():
 
     # the positions of rocks or their types (good or bad) don't change
     def partially_obs_transition(self, x, y, a, dist):
+        # fill the distribution with our y var
         for i in xrange(len(y)):
             dist[i] = y[i]
+        # if a rock is sampled it becomes bad
+        if a == 4:
+            rocks = self.rocks
+            # if we are on a rock state change type to bad
+            if x in rocks:
+                ri = self.rock_map[x] 
+                self.rock_types[ri] = False
+                rocks[x] = False
+                dist[ri] = False
         return dist
 
     # sample the transtion distribution 
