@@ -347,6 +347,7 @@ class RockSamplePOMDP():
         v = [t[0] - o[0], t[1] - o[1]]
         sa = float('inf')
         ai = 1
+        # move in the direction that minimizes angle between action and target
         for (i, a) in enumerate(self.action_vectors):
             ang = angle(v, a)
             if ang < sa:
