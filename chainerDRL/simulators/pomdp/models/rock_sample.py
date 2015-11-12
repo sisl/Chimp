@@ -156,7 +156,7 @@ class RockSamplePOMDP():
         dist[1] = ypos
         return dist
 
-    # the positions of rocks or their types (good or bad) don't change
+    # the positions of rocks don't change, good rocks turn bad after sampling
     def partially_obs_transition(self, x, y, a, dist):
         # fill the distribution with our y var
         for i in xrange(len(y)):
@@ -181,7 +181,7 @@ class RockSamplePOMDP():
         # rock states do not change
         return d
 
-    # returns the observation dsitribution of o from the (s,a) pair
+    # returns the observation dsitribution of o from the (x,y,a) 
     def observation(self, x, y, a, dist):
         prob = 0.0
         # if the action checks a rock 
