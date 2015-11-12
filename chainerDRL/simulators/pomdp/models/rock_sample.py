@@ -19,6 +19,7 @@ class RockSamplePOMDP():
                  seed=1, # random seed
                  rbad=-10.0, rgood=10.0, rexit=10.0, rbump=-100.0, # reward values
                  d0=10, # quality of rover observation,
+                 h_conf=0.5, # confidence level before moving in heuristic policy
                  discount=0.99):
         
         self.random_state = np.random.RandomState(seed) # used for sampling
@@ -65,6 +66,7 @@ class RockSamplePOMDP():
         self.rock_state = np.zeros(k, dtype=np.bool) # (good, bad) type for each rock
 
         self.d0 = d0
+        self.h_conf = h_conf
 
         self.action_vectors = [[-1, 0], [1, 0], [0, 1], [0, -1]]
 
@@ -313,7 +315,7 @@ class RockSamplePOMDP():
 
     def heuristic(self, x, b):
         # if we are not confident, keep checking randomly
-        if b.max() < 0.85:
+        if b.max() < self.h_conf:
             return self.random_state.randint(5, 5+self.k)
         else:
             ri = b.argmax() # index of highest confidence rock state 
