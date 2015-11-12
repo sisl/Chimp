@@ -22,7 +22,9 @@ for i in xrange(steps):
     # get the initial state
     s = sim.get_screenshot()
     # pick random action
-    ai = np.random.randint(sim.n_actions)
+    #ai = np.random.randint(sim.n_actions)
+    ai = pomdp.heuristic_policy(s)
+    
     # progress simulation
     sim.act(ai)
     # get reward and next states
@@ -30,7 +32,7 @@ for i in xrange(steps):
     sp = sim.get_screenshot() # pomdp state, this is a belief
     print "Time Step: ", i
     print "Action ", ai, " Reward: ", r, " Current X State: ", sim.current_xstate, " Current Y State: ", sim.current_ystate, "\n"
-    print "Screen shot: ", sp
+    #print "Screen shot: ", sp
     rtot += r
     # check if reached terminal state
     if sim.episode_over():

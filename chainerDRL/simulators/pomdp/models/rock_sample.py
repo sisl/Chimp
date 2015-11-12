@@ -66,6 +66,8 @@ class RockSamplePOMDP():
 
         self.d0 = d0
 
+        self.action_vectors = [[-1, 0], [1, 0], [0, 1], [0, -1]]
+
         # belief and observation dimensions
         self.xdims = 2
         self.odims = 1
@@ -297,5 +299,65 @@ class RockSamplePOMDP():
 
     def n_obsevations(self):
         return 2
+
+
+    ################################################################# 
+    # Policies
+    ################################################################# 
+
+    def heuristic_policy(self, sc):
+        # takes in a screen shot, [x, b] array
+        x = (sc[0], sc[1]) # x and y pos
+        b = np.array(sc[2:-1]) # belief
+        return self.heuristic(x, b)
+
+    def heuristic(self, x, b):
+        # if we are not confident, keep checking randomly
+        if b.max() < 0.85:
+            return self.random_state.randint(5, 5+self.k)
+        else:
+            ri = b.argmax() # index of highest confidence rock state 
+            y = self.rock_states[ri] # rock state
+            # find closest good rock
+            for (i, t) in enumerate(y):
+                c = float('inf')
+                ci = 0
+                # if rock is good
+                if t:
+                    # if on the rock sample
+                    if x == self.rock_pos[i]:
+                        return 4
+                    xrover = x[0]
+                    yrover = x[1]
+                    xrock, yrock = self.rock_pos[i]
+                    dist = math.sqrt((xrock-xrover)**2 + (yrock-yrover)**2)
+                    if dist < c:
+                        c = dist
+                        ci = i
+            return self.move_to(x, self.rock_pos[ci])
+        # if no good rocks left move right
+        return 1
+                    
+    # action to move rover from origin o to target t
+    def move_to(self, o, t):
+        # vector components
+        v = [t[0] - o[0], t[1] - o[1]]
+        sa = float('inf')
+        ai = 1
+        for (i, a) in enumerate(self.action_vectors):
+            ang = angle(v, a)
+            if ang < sa:
+                sa = ang
+                ai = i
+        return ai
+
+def dotproduct(v1, v2):
+    return sum((a*b) for a, b in zip(v1, v2))
+
+def length(v):
+  return math.sqrt(dotproduct(v, v))
+
+def angle(v1, v2):
+    return math.acos(dotproduct(v1, v2) / (length(v1) * length(v2)))    
 
 
