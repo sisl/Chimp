@@ -12,7 +12,7 @@ class POMDPSimulator():
         self.pomdp = pomdp
         self.current_state = pomdp.initial_state()
         self.current_action = None
-        self.current_observation = None
+        self.current_observation = np.array([-1])
         self.current_belief = pomdp.initial_belief()
         self.current_reward = 0.0
 
@@ -56,7 +56,7 @@ class POMDPSimulator():
     # returns the current simulator belief
     def get_screenshot(self):
         if self.robs:
-            return self.current_observation
+            return np.array([self.current_observation])
         else:
             return self.current_belief.new_belief()
 

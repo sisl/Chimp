@@ -34,9 +34,12 @@ class ReplayMemoryHDF5(object):
         else:
             self.fp = h5py.File(filename, 'a')
 
-        if all(x in self.fp for x in ('state', 'action', 'reward', 'terminal')):
+        if all(x in self.fp for x in ('state', 'ahist', 'action', 'reward', 'terminal')):
             self.state = self.fp['state']
             self.memory_size = self.state.shape[0]
+
+            self.ahist = np.empty((self.memory_size,settings['n_frames']), dtype=np.float32)
+            self.fp['ahist'].read_direct(self.ahist)
 
             self.action = np.empty(self.memory_size, dtype=np.uint8)
             self.fp['action'].read_direct(self.action)
@@ -59,10 +62,12 @@ class ReplayMemoryHDF5(object):
             self.state = self.fp.create_dataset('state',
             (self.memory_size,) + state_shape, dtype='float32')
 
+            self.fp.create_dataset('ahist', (self.memory_size,settings['n_frames']), dtype='float32')
             self.fp.create_dataset('action', (self.memory_size,), dtype='uint8')
             self.fp.create_dataset('reward', (self.memory_size,), dtype='float32')
             self.fp.create_dataset('terminal', (self.memory_size,), dtype=bool)
 
+            self.ahist = np.empty((self.memory_size,settings['n_frames']), dtype=np.float32)
             self.action = np.empty(self.memory_size, dtype=np.uint8)
             self.reward = np.empty(self.memory_size, dtype=np.float32)
             self.terminal = np.empty(self.memory_size, dtype=np.bool)
@@ -113,10 +118,10 @@ class ReplayMemoryHDF5(object):
         else:
             next_states = self.state[next_indices]
 
-        return self.state[indices], self.action[next_indices], self.reward[next_indices], next_states, self.terminal[next_indices]
+        return self.state[indices], self.ahist[indices], self.action[next_indices], self.reward[next_indices], next_states, self.ahist[next_indices], self.terminal[next_indices]
 
 
-    def store_tuple(self, prevstate, action, reward, state, terminal=False):
+    def store_tuple(self, prevstate, prevahist, action, reward, state, ahist, terminal=False):
         ''' Stores an experience tuple into the replay dataset, i.e., a 
         triple (action, reward, state) where |state| is the result of the
         agent taking |action| and |reward| is from the agent taking |action|
@@ -135,6 +140,7 @@ class ReplayMemoryHDF5(object):
         self.terminal[self.head] = terminal
         if not terminal:
             self.state[self.head] = state
+            self.ahist[self.head] = ahist
 
         # update head and valid pointers
         self.head = (self.head + 1) % self.memory_size
@@ -143,6 +149,7 @@ class ReplayMemoryHDF5(object):
 
     def __del__(self):
         ''' Stores the memory dataset into the file when program ends. '''
+        self.fp['ahist'][:] = self.ahist
         self.fp['action'][:] = self.action
         self.fp['reward'][:] = self.reward
         self.fp['terminal'][:] = self.terminal

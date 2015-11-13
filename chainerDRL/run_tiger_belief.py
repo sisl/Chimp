@@ -9,7 +9,7 @@ import numpy as np
 import chainer
 import chainer.functions as F
 
-from memories.memory_hdf5 import ReplayMemoryHDF5
+from memories import ReplayMemoryHDF5
 
 from learners import Learner
 from agents import DQNAgent
@@ -23,8 +23,8 @@ settings = {
     # agent settings
     'batch_size' : 32,
     'print_every' : 5000,
-    'save_dir' : 'results/nets_tiger',
-    'iterations' : 200000,
+    'save_dir' : 'results/nets_tiger_belief',
+    'iterations' : 500000,
     'eval_iterations' : 5000,
     'eval_every' : 5000,
     'save_every' : 5000,
@@ -64,24 +64,27 @@ print(settings)
 
 np.random.seed(settings["seed_general"])
 
-print('Initializing replay memory...')
-memory = ReplayMemoryHDF5(settings)
-
 print('Setting up simulator...')
 pomdp = TigerPOMDP( seed=settings['seed_simulator'] )
-simulator = POMDPSimulator(pomdp)
+simulator = POMDPSimulator(pomdp, robs=False)
+
+settings['model_dims'] = simulator.model_dims
+
+
+print('Initializing replay memory...')
+memory = ReplayMemoryHDF5(settings)
 
 print('Setting up networks...')
 
 net = chainer.FunctionSet(
-    l1=F.Linear(2*settings["n_frames"], 200, wscale=np.sqrt(2)),
+    l1=F.Linear(simulator.model_dims[0] * settings["n_frames"], 200, wscale=np.sqrt(2)),
     l2=F.Linear(200, 100, wscale=np.sqrt(2)),
     l3=F.Linear(100, 100, wscale=np.sqrt(2)),
     l4=F.Linear(100, 50, wscale=np.sqrt(2)),
     l5=F.Linear(50, simulator.n_actions, wscale = np.sqrt(2))
     )
 
-def forward(net, s):
+def forward(net, s, action_history):
     h1 = F.relu(net.l1(s))
     h2 = F.relu(net.l2(h1))
     h3 = F.relu(net.l3(h2))    
@@ -99,11 +102,11 @@ print('Training...')
 agent.train(learner, memory, simulator)
 
 print('Loading the net...')
-learner = agent.load('./results/nets_tiger/learner_final.p')
+learner = agent.load(settings['save_dir']+'/learner_final.p')
 
 ind_max = learner.val_rewards.index(max(learner.val_rewards))
 ind_net = settings['initial_exploration'] + ind_max * settings['eval_every']
-agent.load_net(learner,'./results/nets_tiger/net_%d.p' % int(ind_net))
+agent.load_net(learner,settings['save_dir']+'/net_%d.p' % int(ind_net))
 
 np.random.seed(settings["seed_general"])
 
