@@ -14,8 +14,9 @@ class RockSamplePOMDP():
     def __init__(self, 
                  xs=7, # size of grid y dim
                  ys=7, # size of grid x dim
-                 rocks={(2,0):False, (0,1):True, (3,1):False, (6,3):True, (2,4):False, (3,4):True, (5,5):False,
-                     (1,6):True}, # rock locations and types
+                 #rocks={(2,0):False, (0,1):True, (3,1):False, (6,3):True, (2,4):False, (3,4):True, (5,5):False,
+                 #    (1,6):True}, # rock locations and types
+                 rocks={(2,0):False, (0,1):True, (3,1):False, (6,3):True},
                  seed=1, # random seed
                  rbad=-10.0, rgood=10.0, rexit=10.0, rbump=-100.0, # reward values
                  d0=10, # quality of rover observation,
@@ -310,7 +311,7 @@ class RockSamplePOMDP():
     def heuristic_policy(self, sc):
         # takes in a screen shot, [x, b] array
         x = (sc[0], sc[1]) # x and y pos
-        b = np.array(sc[2:-1]) # belief
+        b = np.array(sc[2:]) # belief
         return self.heuristic(x, b)
 
     def heuristic(self, x, b):
