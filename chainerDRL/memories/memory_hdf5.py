@@ -27,6 +27,8 @@ class ReplayMemoryHDF5(object):
     
     def __init__(self, settings, filename='memory.hdf5', overwrite=True):
 
+        filename = settings['save_dir'] + '_' + filename
+
         self.random_state = np.random.RandomState(settings['seed_memory'])
 
         if overwrite:

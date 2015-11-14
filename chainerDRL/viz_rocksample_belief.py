@@ -17,6 +17,8 @@ from agents import DQNAgent
 from simulators.pomdp import MOMDPSimulator
 from simulators.pomdp import RockSamplePOMDP
 
+import matplotlib.pyplot as plt
+
 print('Setting training parameters...')
 # Set training settings
 settings = {
@@ -24,14 +26,15 @@ settings = {
     'batch_size' : 32,
     'print_every' : 5000,
     'save_dir' : 'results/nets_rocksample_belief',
-    'iterations' : 500000,
-    'eval_iterations' : 1000,
+    'iterations' : 200000,
+    'eval_iterations' : 5000,
     'eval_every' : 5000,
     'save_every' : 5000,
     'initial_exploration' : 10000,
-    'epsilon_decay' : 0.00001, # subtract from epsilon every step
+    'epsilon_decay' : 0.0001, # subtract from epsilon every step
     'eval_epsilon' : 0, # epsilon used in evaluation, 0 means no random actions
     'epsilon' : 1.0,  # Initial exploratoin rate
+    'model_dims': (2,1),
 
     # simulator settings
     'viz' : False,
@@ -41,11 +44,11 @@ settings = {
     'n_frames' : 1,  # number of frames
 
     # learner settings
-    'learning_rate' : 0.00025, 
+    'learning_rate' : 0.001, 
     'decay_rate' : 0.99, # decay rate for RMSprop, otherwise not used
     'discount' : 0.95, # discount rate for RL
     'clip_err' : False, # value to clip loss gradients to
-    'clip_reward' : 1, # value to clip reward values to
+    'clip_reward' : False, # value to clip reward values to
     'target_net_update' : 1000, # update the update-generating target net every fixed number of iterations
     'double_DQN' : False, # use Double DQN (based on Deep Mind paper)
     'optim_name' : 'RMSprop', # currently supports "RMSprop", "ADADELTA" and "SGD"'
@@ -59,20 +62,16 @@ settings = {
 
     }
 
-# {'epsilon_decay': 1e-05, 'seed_agent': 9826, 'initial_exploration': 10000, 'target_net_update': 1000, 'clip_err': False, 'memory_size': 100000, 'iterations': 500000, 'viz': False, 'seed_general': 1723, 'clip_reward': 1, 'decay_rate': 0.99, 'optim_name': 'RMSprop', 'gpu': False, 'eval_every': 5000, 'epsilon': 1.0, 'learning_rate': 0.00025, 'batch_size': 32, 'n_frames': 1, 'discount': 0.95, 'print_every': 5000, 'eval_epsilon': 0, 'eval_iterations': 1000, 'save_every': 5000, 'double_DQN': False, 'seed_simulator': 5632, 'save_dir': 'results/nets_rocksample_belief', 'seed_memory': 7563}
-
 print(settings)
 
 np.random.seed(settings["seed_general"])
 
+print('Initializing replay memory...')
+memory = ReplayMemoryHDF5(settings)
+
 print('Setting up simulator...')
 pomdp = RockSamplePOMDP( seed=settings['seed_simulator'] )
 simulator = MOMDPSimulator(pomdp, robs=False)
-
-settings['model_dims'] = simulator.model_dims
-
-print('Initializing replay memory...')
-memory = ReplayMemoryHDF5(settings)
 
 print('Setting up networks...')
 
@@ -96,39 +95,55 @@ def forward(net, s, action_history):
     output = net.l5(h4)
     return output
 
-'''
-import chainer.computational_graph as c
-import os
-vs = forward(net,chainer.Variable(np.zeros(simulator.model_dims,dtype=np.float32)),None)
-g = c.build_computational_graph([vs])
-with open('./graph', 'w') as o:
-    o.write(g.dump())
-os.system("dot -Tpdf %s > %s" % ('./graph', './graph.pdf'))
-'''
-
 print('Initializing the learner...')
 learner = Learner(net, forward, settings)
 
 print('Initializing the agent framework...')
 agent = DQNAgent(settings)
 
-print('Training...')
-agent.train(learner, memory, simulator)
-
 print('Loading the net...')
 learner = agent.load(settings['save_dir']+'/learner_final.p')
 
+'''Plot training history'''
+
+plt.plot(range(len(learner.val_rewards)), learner.val_rewards)
+plt.xlabel("Evaluation episode (1000 transitions long, every 5000 training iter.)")
+plt.ylabel("Accumulated reward per episode")
+plt.xlim(0, 100)
+plt.ylim(-2000, 2000)
+plt.grid(True)
+plt.savefig(settings['save_dir'] + '_' + "evaluation_reward.svg", bbox_inches='tight')
+plt.close()
+
+plt.plot(range(len(learner.val_qval_avgs)), learner.val_qval_avgs)
+plt.xlabel("Evaluation episode  (1000 transitions long, every 5000 training iter.)")
+plt.ylabel("Average Q-value")
+plt.xlim(0, 100)
+plt.ylim(0, 4)
+plt.grid(True)
+plt.savefig(settings['save_dir'] + '_' + "evaluation_q_value.svg", bbox_inches='tight')
+plt.close()
+
+
+'''Plot value surface for beliefs'''
 ind_max = learner.val_rewards.index(max(learner.val_rewards))
 ind_net = settings['initial_exploration'] + ind_max * settings['eval_every']
 agent.load_net(learner,settings['save_dir']+'/net_%d.p' % int(ind_net))
 
+print(ind_net)
+print(ind_max)
+print(learner.val_rewards[ind_max])
+
+'''Evaluate learned policy against the optimal heuristic policy'''
 np.random.seed(settings["seed_general"])
 
 print('Evaluating DQN agent...')
 print('(reward, MSE loss, mean Q-value, episodes - NA, time)')
 print(agent.evaluate(learner, simulator, 50000))
+# 52828 / 50000 = 1.06
 
 print('Evaluating optimal policy...')
 print('(reward, NA, NA, episodes - NA, time)')
-print(agent.evaluate(learner, simulator, 50000, custom_policy=pomdp.optimal_policy)
+print(agent.evaluate(learner, simulator, 50000, custom_policy=pomdp.heuristic_policy))
+# 49682 / 50000 = 0.99
 

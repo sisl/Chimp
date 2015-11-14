@@ -159,7 +159,7 @@ class DQNAgent(object):
                     
                     global_end = timer()
                     learner.overall_time = global_end - global_start
-                    print('Overall training + evaluation time: '+ str(learner.overall_time))
+                    print('Overall training + evaluation time since the very beginning: '+ str(learner.overall_time))
                     self.save(learner,'%s/learner_final.p' % self.save_dir)
 
                 if self.iteration % self.eval_every == 0:
