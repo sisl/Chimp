@@ -219,7 +219,11 @@ class DQNAgent(object):
         global_end = timer()
         learner.overall_time = global_end - global_start
         print('Overall training + evaluation time: '+ str(learner.overall_time))
+        print('Saving results...')
+        self.save(learner.net,'%s/net_%d.p' % (self.save_dir,int(self.iteration)))
         self.save(learner,'%s/learner_final.p' % self.save_dir)
+        print('Done')
+
 
 
     def perceive(self, learner, memory, simulator, train=True, initial_exporation=False, custom_policy=None):
@@ -298,17 +302,34 @@ class DQNAgent(object):
         total_loss = 0
         total_qval_avg = 0
         episode_counter = 0
+        episode = 0
 
         start = timer()
 
+        paths = []
+        path = []
+        rewards = []
+        actions = []
+
         for i in xrange(eval_iterations):
+
+            if episode > 0:
+                paths.append(path)
+                path = []
+
+            path.append(self.s0)
 
             reward, loss, qval_avg, episode = self.perceive(learner, None, simulator, False, False, custom_policy)
             
+            actions.append(self.a)
+            rewards.append(self.reward)
+
             total_reward += reward
             total_loss += loss
             total_qval_avg += qval_avg
             episode_counter += episode
+
+        paths.append(path)
 
         end = timer()
 
@@ -317,5 +338,5 @@ class DQNAgent(object):
 
         self.reset_episode(simulator)
 
-        return total_reward, total_loss, total_qval_avg, episode_counter,  end - start
+        return total_reward, total_loss, total_qval_avg, episode_counter, end - start, paths, actions, rewards
 
