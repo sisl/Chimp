@@ -19,7 +19,7 @@ class RockSamplePOMDP():
                  rocks={(2,0):False, (0,1):True, (3,1):False, (6,3):True},
                  seed=1, # random seed
                  rbad=-10.0, rgood=10.0, rexit=10.0, rbump=-100.0, # reward values
-                 d0=10, # quality of rover observation,
+                 d0=20, # quality of rover observation,
                  h_conf=0.5, # confidence level before moving in heuristic policy
                  discount=0.99):
         
