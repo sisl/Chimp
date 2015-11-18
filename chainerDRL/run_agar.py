@@ -85,7 +85,7 @@ net = chainer.FunctionSet(
 # Define forward pass that specifies all extra activation functions and how the net produces output
 # on the way, the network also memorizes how to run the backward pass through all the layers
 # this memory is stored in the output variable
-def forward(net, s):
+def forward(net, s, action_history):
     h1 = F.relu(net.l1(s))
     h2 = F.relu(net.l2(h1))
     h3 = F.relu(net.l3(h2))    

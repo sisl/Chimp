@@ -30,10 +30,12 @@ class MOMDPSimulator():
 
         self.x_b_state = np.zeros(pomdp.xdims + pomdp.n_ystates())
 
+        self.x_o_state = np.zeros(pomdp.xdims + pomdp.odims)
+
         if not robs:
             self.model_dims = (pomdp.xdims+pomdp.n_ystates(), 1)
         else:
-            self.model_dims = (pomdp.odims, 1) 
+            self.model_dims = (pomdp.xdims+pomdp.odims, 1) 
 
     # progress single step in simulation
     def act(self, ai):
@@ -67,7 +69,13 @@ class MOMDPSimulator():
     # returns the current simulator belief
     def get_screenshot(self):
         if self.robs:
-            return self.current_observation
+            sc = self.x_o_state
+            nx = self.pomdp.xdims
+            no = self.pomdp.odims
+            for i in xrange(nx):
+                sc[i] = self.current_xstate[i]
+            sc[nx] = self.current_observation
+            return sc 
         else:
             sc = self.x_b_state
             b = self.current_belief.new_belief()

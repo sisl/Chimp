@@ -11,14 +11,14 @@ import numpy as np
 
 # initialize pomdp
 #pomdp = RockSamplePOMDP(seed=np.random.randint(1,1000),h_conf=0.5)
-pomdp = RockSamplePOMDP(seed=100, h_conf=0.15, d0=10000)
+pomdp = RockSamplePOMDP(seed=100, h_conf=0.5, d0=20)
 
 # initialize and pass the pomdp into simulator
-sim = MOMDPSimulator(pomdp) # state and initial belief automatically initialized
+sim = MOMDPSimulator(pomdp, robs=True) # state and initial belief automatically initialized
 
 sim.model_dims # number of states-input layer size
 
-steps = 10000
+steps = 10
 
 rtot = 0.0
 
@@ -37,9 +37,9 @@ for i in xrange(steps):
     # get reward and next states
     r = sim.reward() # real valued reward
     sp = sim.get_screenshot() # pomdp state, this is a belief
-    #print "Time Step: ", i
-    #print "Action ", ai, " Reward: ", r, " Current X State: ", sim.current_xstate, " Current Y State: ", sim.current_ystate, "\n"
-    #print "Screen shot: ", sp
+    print "Time Step: ", i
+    print "Action ", ai, " Reward: ", r, " Current X State: ", sim.current_xstate, " Current Y State: ", sim.current_ystate, "\n"
+    print "Screen shot: ", sp
     rtot += r
     # check if reached terminal state
     if sim.episode_over():
