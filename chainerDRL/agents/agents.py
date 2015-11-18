@@ -128,6 +128,8 @@ class DQNAgent(object):
 
         while self.iteration < self.iterations:
 
+            self.iteration += 1
+
             if self.iteration == self.initial_exploration:
                 print("Initial exploration over. Learning begins...")
 
@@ -135,14 +137,14 @@ class DQNAgent(object):
                 print("Episode: " + str(episode_counter) + ", " + 
                     "Transitions experienced: " +  str(self.iteration))
 
-            if self.iteration < self.initial_exploration:
+            if self.iteration <= self.initial_exploration:
 
                 reward, loss, qval_avg, episode = self.perceive(learner, memory, simulator, True, True)
 
                 episode_counter += episode
                 end_exploration = timer()
 
-            else: # exploration ended
+            if self.iteration >= self.initial_exploration: # exploration ended
 
                 reward, loss, qval_avg, episode = self.perceive(learner, memory, simulator, True, False)
 
@@ -159,7 +161,7 @@ class DQNAgent(object):
                     
                     global_end = timer()
                     learner.overall_time = global_end - global_start
-                    print('Overall training + evaluation time since the very beginning: '+ str(learner.overall_time))
+                    print('Overall training + evaluation time since the start of training: '+ str(learner.overall_time))
                     self.save(learner,'%s/learner_final.p' % self.save_dir)
 
                 if self.iteration % self.eval_every == 0:
@@ -214,13 +216,10 @@ class DQNAgent(object):
 
                     self.reset_episode(simulator)
 
-            self.iteration += 1
-
         global_end = timer()
         learner.overall_time = global_end - global_start
         print('Overall training + evaluation time: '+ str(learner.overall_time))
         print('Saving results...')
-        self.save(learner.net,'%s/net_%d.p' % (self.save_dir,int(self.iteration)))
         self.save(learner,'%s/learner_final.p' % self.save_dir)
         print('Done')
 
