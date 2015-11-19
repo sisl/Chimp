@@ -176,9 +176,9 @@ class TigerPOMDP():
 
     def optimal_policy(self):
         def pol(b):
-            if b[0] < 0.03:
+            if b[0] < 0.04:
                 return 0
-            elif b[0] > 0.97:
+            elif b[0] > 0.96:
                 return 1
             else:
                 return 2
