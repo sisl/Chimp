@@ -1,6 +1,12 @@
 # ChainerDRL
 
-This is a decomposed implementation of a DQN agent. 
+This is an implementation of a DQN agent, that allows one to easily train an agent using a variety of diverse simulators, using simple simulator wrapper files.
+
+# Applications
+
+* Atari ALE games
+* Tiger & RockSample POMDPs
+* agar.io
 
 # Components
 
@@ -32,8 +38,18 @@ The following libraries are recommended (some functionality will be absent witho
 * CUDA
 * Arcade Learning Environment
 
+agar.io has its own set of requirements, including:
+* Chrome
+* Chrome Drive
+* Java
+See agar readme file in the simulators folder for more details 
+
 # Installation
 
 We support non-CUDA installation on OSX and full installation on Ubuntu 14.04. See the corresponding .sh scripts. Note, installation on Ubuntu requires a reboot in the middle of the script. Therefore, one would need to enter commands that follow reboot in .sh script manually.
 
 If you require sudo to run the code on an Ubuntu server, note that sudo resets the path variables. The recommended resolution is to run all scripts in 'sudo su' mode, which given one all the necessary permissions, and preserves the path.
+
+# Details
+
+* Our implementation of the agent always keeps in memory the agent's action history of a set length

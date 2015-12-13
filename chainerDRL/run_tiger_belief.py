@@ -8,6 +8,9 @@ import numpy as np
 
 import chainer
 import chainer.functions as F
+import chainer.links as L
+from chainer import cuda, Function, gradient_check, Variable, optimizers, serializers, utils
+from chainer import Link, Chain, ChainList
 
 from memories import ReplayMemoryHDF5
 
@@ -33,6 +36,7 @@ settings = {
     'eval_epsilon' : 0, # epsilon used in evaluation, 0 means no random actions
     'epsilon' : 1.0,  # Initial exploratoin rate
     'model_dims': (2,1),
+    'learn_freq' : 1,
 
     # simulator settings
     'viz' : False,
@@ -51,6 +55,7 @@ settings = {
     'double_DQN' : False, # use Double DQN (based on Deep Mind paper)
     'optim_name' : 'RMSprop', # currently supports "RMSprop", "ADADELTA" and "SGD"'
     'gpu' : False,
+    'reward_rescale': False,
 
     # general
     'seed_general' : 1723,
@@ -70,30 +75,34 @@ simulator = POMDPSimulator(pomdp, robs=False)
 
 settings['model_dims'] = simulator.model_dims
 
-
 print('Initializing replay memory...')
 memory = ReplayMemoryHDF5(settings)
 
 print('Setting up networks...')
 
-net = chainer.FunctionSet(
-    l1=F.Linear(simulator.model_dims[0] * settings["n_frames"], 200, wscale=np.sqrt(2)),
-    l2=F.Linear(200, 100, wscale=np.sqrt(2)),
-    l3=F.Linear(100, 100, wscale=np.sqrt(2)),
-    l4=F.Linear(100, 50, wscale=np.sqrt(2)),
-    l5=F.Linear(50, simulator.n_actions, wscale = np.sqrt(2))
-    )
+class Linear(Chain):
 
-def forward(net, s, action_history):
-    h1 = F.relu(net.l1(s))
-    h2 = F.relu(net.l2(h1))
-    h3 = F.relu(net.l3(h2))    
-    h4 = F.relu(net.l4(h3))
-    output = net.l5(h4)
-    return output
+    def __init__(self):
+        super(Linear, self).__init__(
+            l1=F.Linear(simulator.model_dims[0] * settings["n_frames"], 200, wscale=np.sqrt(2)),
+            l2=F.Linear(200, 100, wscale=np.sqrt(2)),
+            l3=F.Linear(100, 100, wscale=np.sqrt(2)),
+            l4=F.Linear(100, 50, wscale=np.sqrt(2)),
+            l5=F.Linear(50, simulator.n_actions, wscale = np.sqrt(2))
+        )
+
+    def __call__(self, s, action_history):
+        h1 = F.relu(net.l1(s))
+        h2 = F.relu(net.l2(h1))
+        h3 = F.relu(net.l3(h2))    
+        h4 = F.relu(net.l4(h3))
+        output = net.l5(h4)
+        return output
+
+net = Linear()
 
 print('Initializing the learner...')
-learner = Learner(net, forward, settings)
+learner = Learner(net, settings)
 
 print('Initializing the agent framework...')
 agent = DQNAgent(settings)
@@ -112,9 +121,11 @@ np.random.seed(settings["seed_general"])
 
 print('Evaluating DQN agent...')
 print('(reward, MSE loss, mean Q-value, episodes - NA, time)')
-print(agent.evaluate(learner, simulator, 50000))
+reward, MSE_loss, mean_Q_value, episodes, time, paths, actions, rewards = agent.evaluate(learner, simulator, 50000)
+print(reward, MSE_loss, mean_Q_value, episodes, time)
 
 print('Evaluating optimal policy...')
 print('(reward, NA, NA, episodes - NA, time)')
-print(agent.evaluate(learner, simulator, 50000, custom_policy=pomdp.optimal_policy()))
+reward, MSE_loss, mean_Q_value, episodes, time, paths, actions, rewards = agent.evaluate(learner, simulator, 50000, custom_policy=pomdp.optimal_policy())
+print(reward, MSE_loss, mean_Q_value, episodes, time)
 

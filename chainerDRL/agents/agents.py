@@ -17,24 +17,20 @@ class DQNAgent(object):
     def __init__(self, settings):
 
         self.random_state = np.random.RandomState(settings['seed_agent'])
-
-        # general settings
         self.batch_size = settings['batch_size']
         self.n_frames = settings['n_frames']
-        self.epsilon = settings['epsilon']
-        self.epsilon_decay = settings['epsilon_decay']
-        self.eval_epsilon = settings['eval_epsilon']
-        self.viz = settings['viz']
-
-        # unit of measurement - number of transitions
-        self.initial_exploration = settings['initial_exploration']
+        self.epsilon = settings['epsilon'] # exploration
+        self.epsilon_decay = settings['epsilon_decay'] # RMSprop parameter
+        self.eval_epsilon = settings['eval_epsilon'] # exploration during evaluation
+        self.viz = settings['viz'] # whether to visualize the state/observation, False when not supported by simulator
+        self.initial_exploration = settings['initial_exploration'] # of iterations during initial exploration
         self.iterations = settings['iterations']
         self.eval_iterations = settings['eval_iterations']
         self.eval_every = settings['eval_every']
         self.print_every = settings['print_every']
         self.save_dir = settings['save_dir']
         self.save_every = settings['save_every']
-
+        self.learn_freq = settings['learn_freq']
 
     '''Helper functions to load / save objects'''
 
@@ -56,7 +52,6 @@ class DQNAgent(object):
             opt_a = learner.policy(s, ahist)
         return opt_a
 
-
     def get_state(self, simulator):
         '''update current state with a new observation'''
 
@@ -73,9 +68,8 @@ class DQNAgent(object):
 
         return self.state.copy()
 
-
     def get_ahist(self, a):
-        '''update current state with a new observation'''
+        '''update current action history with a new action'''
 
         ind = [i+1 for i in xrange(self.n_frames - 1)]
         tmp = []
@@ -100,7 +94,7 @@ class DQNAgent(object):
 
 
     def train(self, learner, memory, simulator):
-        '''training'''
+        '''wrapper around the whole training process'''
 
         if not os.path.exists(self.save_dir):
             print("Creating '%s' directory to store training results..." % self.save_dir)
@@ -116,6 +110,7 @@ class DQNAgent(object):
 
         self.reset_episode(simulator, initial=True)
         self.iteration = 0
+        self.episode = 0
 
         total_reward = 0.0
         total_loss = 0.0
@@ -134,39 +129,46 @@ class DQNAgent(object):
                 print("Initial exploration over. Learning begins...")
 
             if self.iteration % self.print_every == 0:
-                print("Episode: " + str(episode_counter) + ", " + 
-                    "Transitions experienced: " +  str(self.iteration))
+                print("Episode: " + str(self.episode) + ", " + "Transitions experienced: " +  str(self.iteration))
 
             if self.iteration <= self.initial_exploration:
+                reward, loss, qval_avg, episode = self.perceive(learner, memory, simulator, train=True, initial_exporation=True)
+                self.episode += episode
 
-                reward, loss, qval_avg, episode = self.perceive(learner, memory, simulator, True, True)
-
-                episode_counter += episode
+            if self.iteration == self.initial_exploration:
+                self.reset_episode(simulator)
+                self.episode += 1
                 end_exploration = timer()
 
-            if self.iteration >= self.initial_exploration: # exploration ended
+            if self.iteration >= self.initial_exploration: # greater or equal to save the initial net
 
-                reward, loss, qval_avg, episode = self.perceive(learner, memory, simulator, True, False)
+                reward, loss, qval_avg, episode = self.perceive(learner, memory, simulator, train=True, initial_exporation=False)
+
+                self.episode += episode
 
                 total_reward += reward
                 total_loss += loss
                 total_qval_avg += qval_avg
-                
                 episode_counter += episode
                 local_counter += 1
 
                 if self.iteration % self.save_every == 0:
+
                     print('Saving %s/net_%d.p' % (self.save_dir,int(self.iteration)))
                     self.save(learner.net,'%s/net_%d.p' % (self.save_dir,int(self.iteration)))
                     
                     global_end = timer()
                     learner.overall_time = global_end - global_start
+
                     print('Overall training + evaluation time since the start of training: '+ str(learner.overall_time))
                     self.save(learner,'%s/learner_final.p' % self.save_dir)
 
                 if self.iteration % self.eval_every == 0:
 
                     end_training = timer()
+
+                    episode_counter += 1
+                    self.episode += 1
 
                     total_loss /= local_counter
                     total_qval_avg /= local_counter
@@ -175,25 +177,29 @@ class DQNAgent(object):
                     learner.train_rewards.append(total_reward)
                     learner.train_losses.append(total_loss)
                     learner.train_qval_avgs.append(total_qval_avg)
+                    learner.train_episodes.append(episode_counter)
                     learner.train_times.append(total_train_time)
 
                     total_reward = 0
                     total_loss = 0
                     total_qval_avg = 0
+                    episode_counter = 0
                     local_counter = 0
 
                     self.reset_episode(simulator)
 
                     for i in xrange(self.eval_iterations):
 
-                        reward, loss, qval_avg, episode = self.perceive(learner,memory,simulator,False, False)
+                        reward, loss, qval_avg, episode = self.perceive(learner, memory, simulator, train=False, initial_exporation=False)
                         
                         total_reward += reward
                         total_loss += loss
                         total_qval_avg += qval_avg
+                        episode_counter += episode
                         local_counter += 1
 
                     end_evaluation = timer()
+                    episode_counter += 1
 
                     total_loss /= local_counter
                     total_qval_avg /= local_counter
@@ -207,11 +213,13 @@ class DQNAgent(object):
                     learner.val_rewards.append(total_reward)
                     learner.val_losses.append(total_loss)
                     learner.val_qval_avgs.append(total_qval_avg)
+                    learner.val_episodes.append(episode_counter)
                     learner.val_times.append(total_eval_time)
 
                     total_reward = 0
                     total_loss = 0
                     total_qval_avg = 0
+                    episode_counter = 0
                     local_counter = 0
 
                     self.reset_episode(simulator)
@@ -222,8 +230,6 @@ class DQNAgent(object):
         print('Saving results...')
         self.save(learner,'%s/learner_final.p' % self.save_dir)
         print('Done')
-
-
 
     def perceive(self, learner, memory, simulator, train=True, initial_exporation=False, custom_policy=None):
         '''one iteration in training or evaluation mode'''
@@ -243,7 +249,7 @@ class DQNAgent(object):
             self.a = self.policy(learner, simulator, self.s0, self.ahist0, epsilon = self.eval_epsilon)
 
         simulator.act(self.a);
-        self.reward = float(simulator.reward());
+        self.reward = np.zeros((1),dtype=np.float32) + float(simulator.reward())
         self.s1 = self.get_state(simulator)
         self.ahist1 = self.get_ahist(self.a)
 
@@ -254,7 +260,7 @@ class DQNAgent(object):
 
             memory.store_tuple(self.s0,self.ahist0,self.a,self.reward,self.s1,self.ahist1,simulator.episode_over())
 
-            if not initial_exporation:
+            if not initial_exporation and self.iteration % self.learn_freq == 0:
                 
                 self.s0_mb,self.ahist0_mb,self.a_mb,self.reward_mb,self.s1_mb,self.ahist1_mb,self.end_mb = memory.minibatch(self.batch_size)
 
@@ -307,28 +313,40 @@ class DQNAgent(object):
 
         paths = []
         path = []
+        reward_histories = []
         rewards = []
+        action_histories = []
         actions = []
+
+        #counter = 0
 
         for i in xrange(eval_iterations):
 
             if episode > 0:
                 paths.append(path)
                 path = []
+                reward_histories.append(rewards)
+                rewards = []
+                action_histories.append(actions)
+                actions = []
+                counter = 0
 
             path.append(self.s0)
 
             reward, loss, qval_avg, episode = self.perceive(learner, None, simulator, False, False, custom_policy)
             
             actions.append(self.a)
-            rewards.append(self.reward)
-
+            rewards.append(float(self.reward) ) # * (learner.discount**counter)
             total_reward += reward
             total_loss += loss
             total_qval_avg += qval_avg
             episode_counter += episode
 
+            #counter += 1
+
         paths.append(path)
+        reward_histories.append(rewards)
+        action_histories.append(actions)
 
         end = timer()
 
@@ -336,6 +354,7 @@ class DQNAgent(object):
         total_qval_avg /= eval_iterations
 
         self.reset_episode(simulator)
+        episode_counter += 1
 
-        return total_reward, total_loss, total_qval_avg, episode_counter, end - start, paths, actions, rewards
+        return total_reward, total_loss, total_qval_avg, episode_counter, end - start, paths, action_histories, reward_histories
 

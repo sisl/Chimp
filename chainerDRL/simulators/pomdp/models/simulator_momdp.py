@@ -13,7 +13,7 @@ class MOMDPSimulator():
         self.current_xstate = pomdp.initial_fully_obs_state() # fully observable vars
         self.current_ystate = pomdp.initial_partially_obs_state() # partially observable vars
         self.current_action = None
-        self.current_observation = None
+        self.current_observation = np.array([-1])
         self.current_belief = pomdp.initial_belief()
         self.current_reward = 0.0
 
@@ -64,7 +64,7 @@ class MOMDPSimulator():
         self.current_reward = r
         self.current_xstate = x
         self.current_ystate = y
-        self.current_observation = o
+        self.current_observation = np.array([o])
 
     # returns the current simulator belief
     def get_screenshot(self):

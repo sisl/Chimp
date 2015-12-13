@@ -28,16 +28,15 @@ settings = {
     # agent settings
     'batch_size' : 32,
     'print_every' : 5000,
-    'save_dir' : 'results/nets_rocksample_belief_rmsprop',
-    'iterations' : 200000,
-    'eval_iterations' : 5000,
+    'save_dir' : 'results/nets_rocksample_belief_som',
+    'iterations' : 1000000,
+    'eval_iterations' : 1000,
     'eval_every' : 5000,
     'save_every' : 5000,
     'initial_exploration' : 10000,
-    'epsilon_decay' : 0.0001, # subtract from epsilon every step
+    'epsilon_decay' : 0.000001, # subtract from epsilon every step
     'eval_epsilon' : 0, # epsilon used in evaluation, 0 means no random actions
     'epsilon' : 1.0,  # Initial exploratoin rate
-    'model_dims': (2,1),
     'learn_freq' : 1,
 
     # simulator settings
@@ -48,15 +47,15 @@ settings = {
     'n_frames' : 1,  # number of frames
 
     # learner settings
-    'learning_rate' : 0.001, 
-    'decay_rate' : 0.95, # decay rate for RMSprop, otherwise not used
+    'learning_rate' : 0.00025, 
+    'decay_rate' : 0.99, # decay rate for RMSprop, otherwise not used
     'discount' : 0.95, # discount rate for RL
     'clip_err' : False, # value to clip loss gradients to
-    'clip_reward' : False, # value to clip reward values to
-    'target_net_update' : 10000, # update the update-generating target net every fixed number of iterations
+    'clip_reward' : 1, # value to clip reward values to
+    'target_net_update' : 1000, # update the update-generating target net every fixed number of iterations
     'double_DQN' : False, # use Double DQN (based on Deep Mind paper)
     'optim_name' : 'RMSprop', # currently supports "RMSprop", "ADADELTA" and "SGD"'
-    'gpu' : False,
+    'gpu' : True,
     'reward_rescale': False,
 
     # general
@@ -71,39 +70,40 @@ print(settings)
 
 np.random.seed(settings["seed_general"])
 
-print('Initializing replay memory...')
-memory = ReplayMemoryHDF5(settings)
-
 print('Setting up simulator...')
 pomdp = RockSamplePOMDP( seed=settings['seed_simulator'] )
 simulator = MOMDPSimulator(pomdp, robs=False)
 
+settings['model_dims'] = simulator.model_dims
+
+print('Initializing replay memory...')
+memory = ReplayMemoryHDF5(settings)
+
 print('Setting up networks...')
 
-class Linear(Chain):
+class SOM(Chain):
 
     def __init__(self):
-        super(Linear, self).__init__(
-            l1=F.Bilinear(simulator.model_dims[0] * settings["n_frames"], settings["n_frames"], 200),
-            l2=F.Linear(200, 100, wscale=np.sqrt(2)),
-            l3=F.Linear(100, 100, wscale=np.sqrt(2)),
-            l4=F.Linear(100, 200, wscale=np.sqrt(2)),
-            l5=F.Linear(200, 100, wscale=np.sqrt(2)),
-            l6=F.Linear(100, 50, wscale=np.sqrt(2)),
-            l7=F.Linear(100, simulator.n_actions, wscale = np.sqrt(2))
+        super(SOM, self).__init__(
+            l1=F.Linear(simulator.model_dims[0] * settings["n_frames"], 1024, wscale=np.sqrt(2)),
+            l2=F.Convolution2D(1, 4, ksize=4, stride=2, nobias=False, wscale=np.sqrt(2)),
+            l3=F.Convolution2D(4, 4, ksize=4, stride=2, nobias=False, wscale=np.sqrt(2)),
+            l4=F.Convolution2D(4, 2, ksize=3, stride=1, nobias=False, wscale=np.sqrt(2)),
+            l5=F.Linear(32, 50, wscale = np.sqrt(2)),
+            l6=F.Linear(50, simulator.n_actions, wscale = np.sqrt(2))
         )
 
     def __call__(self, s, action_history):
-        h1 = F.relu(net.l1(s/10,action_history/10))
-        h2 = F.relu(net.l2(h1))
+        h1 = F.relu(net.l1(s/10))
+        h1a = F.reshape(h1,(-1,1,32,32)) # -1 means we don't specify the number of batches
+        h2 = F.relu(net.l2(h1a))
         h3 = F.relu(net.l3(h2))
         h4 = F.relu(net.l4(h3))
         h5 = F.relu(net.l5(h4))
-        h6 = F.relu(net.l6(h5))
-        output = net.l7(h6)
+        output = net.l6(h5)
         return output
 
-net = Linear()
+net = SOM()
 
 print('Initializing the learner...')
 learner = Learner(net, settings)
@@ -119,7 +119,7 @@ learner = agent.load(settings['save_dir']+'/learner_final.p')
 plt.plot(range(len(learner.val_rewards)), learner.val_rewards)
 plt.xlabel("Evaluation episode (1000 transitions long, every 5000 training iter.)")
 plt.ylabel("Accumulated reward per episode")
-plt.xlim(0, 100)
+plt.xlim(0, 200)
 plt.ylim(-2000, 2000)
 plt.grid(True)
 plt.savefig(settings['save_dir'] + '_' + "evaluation_reward.svg", bbox_inches='tight')
@@ -128,16 +128,14 @@ plt.close()
 plt.plot(range(len(learner.val_qval_avgs)), learner.val_qval_avgs)
 plt.xlabel("Evaluation episode  (1000 transitions long, every 5000 training iter.)")
 plt.ylabel("Average Q-value")
-plt.xlim(0, 100)
+plt.xlim(0, 200)
 plt.ylim(0, 4)
 plt.grid(True)
 plt.savefig(settings['save_dir'] + '_' + "evaluation_q_value.svg", bbox_inches='tight')
 plt.close()
 
-
 csv_rq = np.array([range(len(learner.val_rewards)),learner.val_rewards, learner.val_qval_avgs]).T
-np.savetxt('./generated_data/training_rocksample_belief_rmsprop.csv', csv_rq, delimiter=',')
-
+np.savetxt('./generated_data/training_rocksample_belief_som_rmsprop.csv', csv_rq, delimiter=',')
 
 
 '''Plot value surface for beliefs'''
@@ -198,12 +196,9 @@ plt.savefig(settings['save_dir'] + '_' + str(ind_net) + '_' + "paths.svg", bbox_
 plt.close()
 
 
-
 print('Evaluating optimal policy...')
 print('(reward, NA, NA, episodes - NA, time)')
 reward, MSE_loss, mean_Q_value, episodes, time, paths, actions, rewards = agent.evaluate(learner, simulator, 50000, custom_policy=pomdp.heuristic_policy)
 print(reward, MSE_loss, mean_Q_value, episodes, time)
 print(sum([sum(r) for r in rewards])/float(episodes))
-
-
 
