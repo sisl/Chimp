@@ -116,7 +116,8 @@ os.system("dot -Tpdf %s > %s" % ('./graph', './graph.pdf'))
 '''
 
 print('Initializing the learner...')
-learner = Learner(net, settings)
+learner = Learner(settings)
+learner.load_net(net)
 
 print('Initializing the agent framework...')
 agent = DQNAgent(settings)

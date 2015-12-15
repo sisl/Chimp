@@ -83,7 +83,6 @@ class ReplayMemoryHDF5(object):
         # greatest index of any valid experience; i.e., [0, self.valid)
         self.valid = self.state.attrs['valid']
 
-
     def minibatch(self, batch_size):
         ''' Uniformly sample (s,a,r,s') experiences from the replay dataset.
 
@@ -98,7 +97,7 @@ class ReplayMemoryHDF5(object):
             raise ValueError("Can't draw sample of size %d from replay dataset of size %d"
                        % (batch_size, self.valid))
 
-        # sampling without replacement
+        # sampling without replacement (important to do without replacement)
         indices = self.random_state.choice(xrange(0, self.valid), size=batch_size, replace=False).tolist()
 
         # can't include (head - 1)th state in sample because we don't know the next
@@ -121,7 +120,6 @@ class ReplayMemoryHDF5(object):
             next_states = self.state[next_indices]
 
         return self.state[indices], self.ahist[indices], self.action[next_indices], self.reward[next_indices], next_states, self.ahist[next_indices], self.terminal[next_indices]
-
 
     def store_tuple(self, prevstate, prevahist, action, reward, state, ahist, terminal=False):
         ''' Stores an experience tuple into the replay dataset, i.e., a 

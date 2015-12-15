@@ -108,7 +108,8 @@ class Linear(Chain):
 net = Linear()
 
 print('Initializing the learner...')
-learner = Learner(net, settings)
+learner = Learner(settings)
+learner.load_net(net)
 
 print('Initializing the agent framework...')
 agent = DQNAgent(settings)
@@ -141,7 +142,7 @@ np.savetxt('./generated_data/training_rocksample_observation.csv', csv_rq, delim
 
 ind_max = learner.val_rewards.index(max(learner.val_rewards))
 ind_net = settings['initial_exploration'] + ind_max * settings['eval_every']
-agent.load_net(learner,settings['save_dir']+'/net_%d.p' % int(ind_net))
+learner.load_net(settings['save_dir']+'/net_%d.p' % int(ind_net))
 
 np.random.seed(settings["seed_general"])
 

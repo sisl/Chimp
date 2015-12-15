@@ -36,7 +36,7 @@ settings = {
     'learn_freq' : 4, # do gradient update every 'n' iterations during training
 
     # Atari simulator settings
-    'epsilon' : 1.0,  # Initial exploratoin rate
+    'epsilon' : 1.0,  # Initial exploration rate
     'frame_skip' : 4,
     'viz' : True,
     'viz_cropped' : True, # visualize only what an agent sees? vs. the whole screen
@@ -47,13 +47,13 @@ settings = {
     'action_history' : True,
 
     # replay memory settings
-    'memory_size' : 100000,  # size of replay memory
+    'memory_size' : 1000000,  # size of replay memory
     'n_frames' : 4,  # number of frames
 
     # learner settings
     'learning_rate' : 0.00025, 
     'decay_rate' : 0.95, # decay rate for RMSprop, otherwise not used
-    'discount' : 0.99, # discount rate for RL
+    'discount' : 0.95, # discount rate for RL
     'clip_err' : False, # value to clip loss gradients to
     'clip_reward' : False, # value to clip reward values to
     'target_net_update' : 10000, # update the update-generating target net every fixed number of iterations
@@ -104,7 +104,8 @@ class Convolution(Chain):
 net = Convolution()
 
 print('Initializing the learner...')
-learner = Learner(net, settings)
+learner = Learner(settings)
+learner.load_net(net)
 
 print('Initializing the agent framework...')
 agent = DQNAgent(settings)

@@ -13,13 +13,24 @@ from copy import deepcopy
 
 import pickle # used to save the nets
 
-class Learner(object):
+class LearnerLSTM(object):
 
-    def __init__(self, settings):
+    def __init__(self, net, settings):
 
         self.settings = settings
-
+        
+        self.net = net
+        
         self.gpu = settings['gpu']
+        if self.gpu:
+            cuda.get_device(0).use()
+            self.net.to_gpu()
+            print("Deep learning on GPU ...")
+        else:
+            print("Deep learning on CPU ...")
+
+        self.target_net = deepcopy(self.net)
+
         self.learning_rate = settings['learning_rate']
         self.decay_rate = settings['decay_rate']
         self.discount = settings['discount']
@@ -27,8 +38,6 @@ class Learner(object):
         self.clip_reward = settings['clip_reward']
         self.target_net_update = settings['target_net_update']
         self.double_DQN = settings['double_DQN']
-        self.reward_rescale = settings['reward_rescale']
-        self.r_max = 1 # keep the default value at 1
 
         # setting up various possible gradient update algorithms
         if settings['optim_name'] == 'RMSprop':
@@ -39,56 +48,61 @@ class Learner(object):
             self.optimizer = optimizers.AdaDelta()
 
         elif settings['optim_name'] == 'ADAM':
-            self.optimizer = optimizers.Adam(alpha=self.learning_rate)
+            self.optimizer = optimizers.Adam()
 
         elif settings['optim_name'] == 'SGD':
             self.optimizer = optimizers.SGD(lr=self.learning_rate)
 
         else:
+
             print('The requested optimizer is not supported!!!')
             exit()
 
         self.optim_name = settings['optim_name']
+        self.optimizer.setup(self.net)
 
         self.train_losses = []
         self.train_rewards = []
         self.train_qval_avgs = []
-        self.train_episodes = []
         self.train_times = []
-
         self.val_losses = []
         self.val_rewards = []
         self.val_qval_avgs = []
-        self.val_episodes = []
         self.val_times = []
 
         self.overall_time = 0
 
-
+    # sampling one mini-batch and one update based on it
     def gradUpdate(self, s0, ahist0, a, r, s1, ahist1, episode_end_flag):
-        ''' one gradient update step based on a given mini-batch '''
 
         if self.clip_reward:
             r = np.clip(r,-self.clip_reward,self.clip_reward)
 
-        if self.reward_rescale:
-            self.r_max = max(np.amax(np.absolute(r)),self.r_max) # r_max originally equal to 1
-
         self.net.zerograds()  # reset gradient storage to zero
+        self.net.reset_state() # reset LSTM states
 
-        # move forward through the net and produce output variable 
-        # containing the loss gradient + MSE loss + average Q-value for the actions taken
-        approx_q_all, loss, qval_avg = self.forwardLoss(s0, ahist0, a, r/self.r_max, s1, ahist1, episode_end_flag)
+        s0_elements = np.split(s0, s0.shape[1], axis=1)
+        s1_elements = np.split(s1, s1.shape[1], axis=1)
+
+        approx_q_all = 0
+        loss = 0
+        qval_avg = 0
+
+        for i in xrange(len(s0_elements)):
+
+            approx_q_all_e, loss_e, qval_avg_e = self.forwardLoss(s0_elements[i], ahist0, a, r, s1_elements[i], ahist1, episode_end_flag)
+            approx_q_all += approx_q_all_e
+            loss += loss_e
+            qval_avg += qval_avg_e
 
         approx_q_all.backward() # propagate the loss gradient through the net
 
         self.optimizer.update() # carry out parameter updates based on the distributed gradients
 
-        return approx_q_all, loss, qval_avg
+        return approx_q_all/len(s0_elements), loss/len(s0_elements), qval_avg/len(s0_elements)
 
-
+    # function to get net output and to calculate the loss
     def forwardLoss(self, s0, ahist0, a, r, s1, ahist1, episode_end_flag):
-        ''' get network output, calculate the loss and the average Q-value'''
 
         if self.gpu:
             s0 = cuda.to_gpu(s0)
@@ -128,7 +142,7 @@ class Learner(object):
         # 'end' here tells us to zero out the step from the future in terminal states
         target_q_value = r + self.discount * target_q_max * (1-1*episode_end_flag)
 
-        # calculate the expected Q-values for all actions
+        # calculate expected Q-values for all actions
         approx_q_all = self.net(s0, ahist0)
 
         # extract expected Q-values for the actions we actually took
@@ -156,8 +170,8 @@ class Learner(object):
 
         return approx_q_all, np.mean(gradLoss**2), np.mean(approx_q_value)
 
+    # extract the optimal policy in the given state
     def policy(self, s, ahist):
-        ''' extract the optimal policy in the given state and action history '''
 
         if self.gpu:
             s = cuda.to_gpu(s)
@@ -176,40 +190,17 @@ class Learner(object):
 
         return opt_a
 
-    def copy_net_to_target_net(self):
-        ''' update target net with the current net '''
+    # function to update target net with the current net
+    def net_to_target_net(self):
         self.target_net = deepcopy(self.net)
 
-    def save(self,obj,name):
-        pickle.dump(obj, open(name, "wb"))
-
-    def load(self,name):
-        return pickle.load(open(name, "rb"))
-
-    def save_net(self,name):
-        ''' save a net to a path '''
-        self.save(self.net,name)
-
+    # function to load in a new net from a variable
     def load_net(self,net):
-        ''' load in a net from path or a variable'''
-        if isinstance(net, str): # if it is a string, load the net from the path
-            net = self.load(net)
-
         self.net = deepcopy(net)
         if self.gpu:
-            cuda.get_device(0).use()
             self.net.to_gpu()
         self.target_net = deepcopy(self.net)
 
-        self.optimizer.setup(self.net)
-
-    def save_training_history(self, path='.'):
-        ''' save training history '''
-        train_hist = np.array([range(len(self.train_rewards)),self.train_losses,self.train_rewards, self.train_qval_avgs, self.train_episodes, self.train_times]).T
-        eval_hist = np.array([range(len(self.val_rewards)),self.val_losses,self.val_rewards, self.val_qval_avgs, self.val_episodes, self.val_times]).T
-        np.savetxt(path + '/training_hist.csv', train_hist, delimiter=',')
-        np.savetxt(path + '/evaluation_hist.csv', eval_hist, delimiter=',')
-
-    def params(self):
-        ''' collect net parameters (coefs and grads) '''
+    # collect net parameters (coefs and grads)
+    def params(self, net):
         self.net.collect_parameters()

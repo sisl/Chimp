@@ -81,32 +81,6 @@ simulator = AtariSimulator(settings)
 print('Initializing replay memory...')
 memory = ReplayMemoryHDF5(settings)
 
-print('Setting up networks...')
-
-class Convolution(Chain):
-
-    def __init__(self):
-        super(Convolution, self).__init__(
-            l1=F.Convolution2D(settings['n_frames'], 32, ksize=8, stride=4, nobias=False, wscale=np.sqrt(2)),
-            l2=F.Convolution2D(32, 64, ksize=4, stride=2, nobias=False, wscale=np.sqrt(2)),
-            l3=F.Convolution2D(64, 64, ksize=3, stride=1, nobias=False, wscale=np.sqrt(2)),
-            l4=F.Linear(3136, 512, wscale = np.sqrt(2)),
-            l5=F.Linear(512, simulator.n_actions, wscale = np.sqrt(2)),
-        )
-
-    def __call__(self, s, action_history):
-        h1 = F.relu(self.l1(s/255.0))
-        h2 = F.relu(self.l2(h1))
-        h3 = F.relu(self.l3(h2))
-        h4 = F.relu(self.l4(h3))
-        output = self.l5(h4)
-        return output
-
-net = Convolution()
-
-print('Initializing the learner...')
-learner = Learner(net, settings)
-
 print('Initializing the agent framework...')
 agent = DQNAgent(settings)
 
@@ -136,7 +110,7 @@ plt.close()
 '''Plot value surface for beliefs'''
 ind_max = learner.val_rewards[0::5].index(max(learner.val_rewards[0::5]))
 ind_net = settings['save_every'] + ind_max * settings['save_every']
-agent.load_net(learner,settings['save_dir']+'/net_%d.p' % int(ind_net))
+learner.load_net(settings['save_dir']+'/net_%d.p' % int(ind_net))
 
 print(ind_net)
 print(ind_max*5)

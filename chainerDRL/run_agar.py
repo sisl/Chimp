@@ -100,7 +100,8 @@ class Convolution(Chain):
 net = Convolution()
 
 print('Initializing the learner...')
-learner = Learner(net, settings)
+learner = Learner(settings)
+learner.load_net(net)
 
 print('Initializing the agent framework...')
 agent = DQNAgent(settings)
