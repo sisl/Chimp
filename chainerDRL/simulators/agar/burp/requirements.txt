@@ -1,3 +1,0 @@
-greenlet==0.4.9
-selenium==2.48.0
-wheel==0.24.0
