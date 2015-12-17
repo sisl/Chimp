@@ -6,7 +6,6 @@ This is an implementation of a DQN agent, that allows one to easily train an age
 
 * Atari ALE games
 * Tiger & RockSample POMDPs
-* agar.io
 
 # Components
 
@@ -20,7 +19,6 @@ This is an implementation of a DQN agent, that allows one to easily train an age
 * Simulators: a variety of environments of varied complexity for agents to interact with
 	* Single-player Arcade Learning Environment
 	* Tiger POMDP problem
-	* Intermittent support for agar.io
 
 * Agents: the general framework that handles all interactions between a learner, a memory and a simulator.
 
@@ -37,12 +35,6 @@ The following libraries are recommended (some functionality will be absent witho
 * Pygame
 * CUDA
 * Arcade Learning Environment
-
-agar.io has its own set of requirements, including:
-* Chrome
-* Chrome Drive
-* Java
-See agar readme file in the simulators folder for more details 
 
 # Installation
 
