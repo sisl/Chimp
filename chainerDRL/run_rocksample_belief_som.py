@@ -94,13 +94,13 @@ class SOM(Chain):
         )
 
     def __call__(self, s, action_history):
-        h1 = F.relu(net.l1(s/10))
+        h1 = F.relu(self.l1(s/10))
         h1a = F.reshape(h1,(-1,1,32,32)) # -1 means we don't specify the number of batches
-        h2 = F.relu(net.l2(h1a))
-        h3 = F.relu(net.l3(h2))
-        h4 = F.relu(net.l4(h3))
-        h5 = F.relu(net.l5(h4))
-        output = net.l6(h5)
+        h2 = F.relu(self.l2(h1a))
+        h3 = F.relu(self.l3(h2))
+        h4 = F.relu(self.l4(h3))
+        h5 = F.relu(self.l5(h4))
+        output = self.l6(h5)
         return output
 
 net = SOM()

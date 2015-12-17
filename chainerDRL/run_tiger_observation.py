@@ -91,11 +91,11 @@ class Linear(Chain):
         )
 
     def __call__(self, s, action_history):
-        h1 = F.relu(net.l1(s,action_history))
-        h2 = F.relu(net.l2(h1))
-        h3 = F.relu(net.l3(h2))    
-        h4 = F.relu(net.l4(h3))
-        output = net.l5(h4)
+        h1 = F.relu(self.l1(s,action_history))
+        h2 = F.relu(self.l2(h1))
+        h3 = F.relu(self.l3(h2))    
+        h4 = F.relu(self.l4(h3))
+        output = self.l5(h4)
         return output
 
 net = Linear()
