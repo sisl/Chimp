@@ -10,6 +10,7 @@ import chainer
 import chainer.functions as F
 
 from memories import ReplayMemoryHDF5
+from memories import ReplayMemory
 
 from learners import Learner
 from agents import DQNAgent
@@ -24,7 +25,8 @@ settings = {
     'batch_size' : 32,
     'print_every' : 5000,
     'save_dir' : 'results/nets_tiger_belief',
-    'iterations' : 500000,
+    #'iterations' : 500000,
+    'iterations' : 10000,
     'eval_iterations' : 5000,
     'eval_every' : 5000,
     'save_every' : 5000,
@@ -73,6 +75,7 @@ settings['model_dims'] = simulator.model_dims
 
 print('Initializing replay memory...')
 memory = ReplayMemoryHDF5(settings)
+#memory = ReplayMemory(settings)
 
 print('Setting up networks...')
 
@@ -101,6 +104,8 @@ agent = DQNAgent(settings)
 print('Training...')
 agent.train(learner, memory, simulator)
 
+
+"""
 print('Loading the net...')
 learner = agent.load(settings['save_dir']+'/learner_final.p')
 
@@ -117,4 +122,4 @@ print(agent.evaluate(learner, simulator, 50000))
 print('Evaluating optimal policy...')
 print('(reward, NA, NA, episodes - NA, time)')
 print(agent.evaluate(learner, simulator, 50000, custom_policy=pomdp.optimal_policy()))
-
+"""

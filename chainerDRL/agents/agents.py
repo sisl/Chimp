@@ -98,7 +98,7 @@ class DQNAgent(object):
         self.state = -1*np.ones((1, self.n_frames, simulator.model_dims[0], simulator.model_dims[1]), dtype=np.float32)
         self.s0 = self.get_state(simulator)
 
-
+    #@profile
     def train(self, learner, memory, simulator):
         '''training'''
 
@@ -224,7 +224,7 @@ class DQNAgent(object):
         print('Done')
 
 
-
+    #@profile
     def perceive(self, learner, memory, simulator, train=True, initial_exporation=False, custom_policy=None):
         '''one iteration in training or evaluation mode'''
 

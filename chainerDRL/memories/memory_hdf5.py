@@ -84,6 +84,7 @@ class ReplayMemoryHDF5(object):
         self.valid = self.state.attrs['valid']
 
 
+    #@profile 
     def minibatch(self, batch_size):
         ''' Uniformly sample (s,a,r,s') experiences from the replay dataset.
 
@@ -122,7 +123,7 @@ class ReplayMemoryHDF5(object):
 
         return self.state[indices], self.ahist[indices], self.action[next_indices], self.reward[next_indices], next_states, self.ahist[next_indices], self.terminal[next_indices]
 
-
+    #@profile
     def store_tuple(self, prevstate, prevahist, action, reward, state, ahist, terminal=False):
         ''' Stores an experience tuple into the replay dataset, i.e., a 
         triple (action, reward, state) where |state| is the result of the

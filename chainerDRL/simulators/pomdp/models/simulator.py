@@ -28,7 +28,8 @@ class POMDPSimulator():
             self.model_dims = self.pomdp.belief_shape
         else:
             self.model_dims = self.pomdp.observation_shape
-
+    
+    #@profile 
     # progress single step in simulation
     def act(self, ai):
         pomdp = self.pomdp

@@ -17,11 +17,11 @@ sim.n_states # number of states-input layer size
 
 opt = pomdp.optimal_policy()
 
-steps = 100
+steps = 50000
 
 rtot = 0.0
 
-for i in range(steps):
+for i in xrange(steps):
     # get the initial state
     s = sim.get_screenshot()
     # pick random action
@@ -36,8 +36,9 @@ for i in range(steps):
     r = sim.reward() # real valued reward
     sp = sim.get_screenshot() # pomdp state, this is a belief
 
-    print "Action ", ai, " Reward: ", r, " Screen Shot: ", sp
-    print "Current State: ", sim.current_state, " Current Belief: ", sim.current_belief.bnew, "\n"
+    print "Step: ", i
+    #print "Action ", ai, " Reward: ", r, " Screen Shot: ", sp
+    #print "Current State: ", sim.current_state, " Current Belief: ", sim.current_belief.bnew, "\n"
 
     rtot += r
 
