@@ -132,11 +132,7 @@ print(reward, MSE_loss, mean_Q_value, episodes, time)
 
 print('Evaluating optimal policy...')
 print('(reward, NA, NA, episodes - NA, time)')
-<<<<<<< HEAD
 print(agent.evaluate(learner, simulator, 50000, custom_policy=pomdp.optimal_policy()))
 """
-=======
 reward, MSE_loss, mean_Q_value, episodes, time, paths, actions, rewards = agent.evaluate(learner, simulator, 50000, custom_policy=pomdp.optimal_policy())
 print(reward, MSE_loss, mean_Q_value, episodes, time)
-
->>>>>>> ffc8433a2bf0819b64511c281371b3a9ab18844e
