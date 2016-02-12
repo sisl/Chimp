@@ -56,7 +56,7 @@ class AtariSimulator(object):
 
         self.ale.getScreenGrayscale(self.screen_data)
         self.tmp = self.screen_data[(self.screen_dims[1]-self.screen_dims[0]-self.pad):(self.screen_dims[1]-self.pad),:]
-        self.frame = spm.imresize(self.tmp,self.model_dims[::-1], interp='nearest').T
+        self.frame = spm.imresize(self.tmp,self.model_dims[::-1],interp='nearest').T #, interp='nearest'
 
         return self.frame
 

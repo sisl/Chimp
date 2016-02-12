@@ -8,6 +8,9 @@ import numpy as np
 
 import chainer
 import chainer.functions as F
+import chainer.links as L
+from chainer import cuda, Function, gradient_check, Variable, optimizers, serializers, utils
+from chainer import Link, Chain, ChainList
 
 from memories import ReplayMemoryHDF5
 
@@ -35,6 +38,7 @@ settings = {
     'eval_epsilon' : 0, # epsilon used in evaluation, 0 means no random actions
     'epsilon' : 1.0,  # Initial exploratoin rate
     'model_dims': (2,1),
+    'learn_freq' : 1,
 
     # simulator settings
     'viz' : False,
@@ -53,6 +57,7 @@ settings = {
     'double_DQN' : False, # use Double DQN (based on Deep Mind paper)
     'optim_name' : 'RMSprop', # currently supports "RMSprop", "ADADELTA" and "SGD"'
     'gpu' : False,
+    'reward_rescale': False,
 
     # general
     'seed_general' : 1723,
@@ -75,24 +80,29 @@ simulator = POMDPSimulator(pomdp)
 
 print('Setting up networks...')
 
-net = chainer.FunctionSet(
-    l1=F.Linear(simulator.model_dims[0] * settings["n_frames"], 200, wscale=np.sqrt(2)),
-    l2=F.Linear(200, 100, wscale=np.sqrt(2)),
-    l3=F.Linear(100, 100, wscale=np.sqrt(2)),
-    l4=F.Linear(100, 50, wscale=np.sqrt(2)),
-    l5=F.Linear(50, simulator.n_actions, wscale = np.sqrt(2))
-    )
+class Linear(Chain):
 
-def forward(net, s, action_history):
-    h1 = F.relu(net.l1(s))
-    h2 = F.relu(net.l2(h1))
-    h3 = F.relu(net.l3(h2))    
-    h4 = F.relu(net.l4(h3))
-    output = net.l5(h4)
-    return output
+    def __init__(self):
+        super(Linear, self).__init__(
+            l1=F.Linear(simulator.model_dims[0] * settings["n_frames"], 200, wscale=np.sqrt(2)),
+            l2=F.Linear(200, 100, wscale=np.sqrt(2)),
+            l3=F.Linear(100, 100, wscale=np.sqrt(2)),
+            l4=F.Linear(100, 50, wscale=np.sqrt(2)),
+            l5=F.Linear(50, simulator.n_actions, wscale = np.sqrt(2))
+        )
+
+    def __call__(self, s, action_history):
+        h1 = F.relu(net.l1(s))
+        h2 = F.relu(net.l2(h1))
+        h3 = F.relu(net.l3(h2))    
+        h4 = F.relu(net.l4(h3))
+        output = net.l5(h4)
+        return output
+
+net = Linear()
 
 print('Initializing the learner...')
-learner = Learner(net, forward, settings)
+learner = Learner(net, settings)
 
 print('Initializing the agent framework...')
 agent = DQNAgent(settings)
@@ -121,6 +131,10 @@ plt.savefig(settings['save_dir'] + '_' + "evaluation_q_value.svg", bbox_inches='
 plt.close()
 
 
+
+csv_rq = np.array([range(len(learner.val_rewards)),learner.val_rewards, learner.val_qval_avgs]).T
+
+
 '''Plot value surface for beliefs'''
 beliefs = np.array([[0,1],[0.025,0.975],[0.05,0.95], [0.15,0.85], [0.25,0.75], [0.35,0.65], [0.5,0.5],
     [0.65,0.35], [0.75,0.25], [0.85,0.15], [0.95,0.05], [0.975, 0.025], [1,0] ],dtype=np.float32)
@@ -142,15 +156,15 @@ plt.ylabel("Q-value")
 plt.xlim(0, 1)
 plt.ylim(0, 40)
 plt.grid(True)
-plt.legend();
+plt.legend(loc=4);
 plt.savefig(settings['save_dir'] + '_' + str(ind_net) + '_' + "value_surface_bad.svg", bbox_inches='tight')
 plt.close()
 
+csv_val_bad = np.array([beliefs.data[:,0], all_a.data[:,0], all_a.data[:,1], all_a.data[:,2]]).T
 
 ind_max = learner.val_rewards.index(max(learner.val_rewards))
 ind_net = settings['initial_exploration'] + ind_max * settings['eval_every']
 agent.load_net(learner,settings['save_dir']+'/net_%d.p' % int(ind_net))
-
 
 all_a = learner.forward(learner.net, beliefs, None)
 
@@ -162,10 +176,15 @@ plt.ylabel("Q-value")
 plt.xlim(0, 1)
 plt.ylim(0, 40)
 plt.grid(True)
-plt.legend();
+plt.legend(loc=4);
 plt.savefig(settings['save_dir'] + '_' + str(ind_net) + '_' + "value_surface_best.svg", bbox_inches='tight')
 plt.close()
 
+csv_val_good = np.array([beliefs.data[:,0], all_a.data[:,0], all_a.data[:,1], all_a.data[:,2]]).T
+
+np.savetxt('./training.csv', csv_rq, delimiter=',')
+np.savetxt('./val_good.csv', csv_val_good, delimiter=',')
+np.savetxt('./val_bad.csv', csv_val_bad, delimiter=',')
 
 '''Evaluate learned policy against the optimal heuristic policy'''
 

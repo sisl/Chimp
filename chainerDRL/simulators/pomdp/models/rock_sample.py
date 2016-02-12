@@ -16,7 +16,7 @@ class RockSamplePOMDP():
                  ys=7, # size of grid x dim
 
                  rocks={(2,4):False, (3,4):True, (5,5):False, # (2,0):False, (0,1):True, (3,1):False, (6,3):True,
-                                          (1,6):True}, # rock locations and types
+                                          (1,6):True},
                  
                  seed=1, # random seed
                  rbad=-10.0, rgood=10.0, rexit=10.0, rbump=-100.0, # reward values
