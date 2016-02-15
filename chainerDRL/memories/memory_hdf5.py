@@ -83,11 +83,6 @@ class ReplayMemoryHDF5(object):
         # greatest index of any valid experience; i.e., [0, self.valid)
         self.valid = self.state.attrs['valid']
 
-<<<<<<< HEAD
-
-    #@profile 
-=======
->>>>>>> ffc8433a2bf0819b64511c281371b3a9ab18844e
     def minibatch(self, batch_size):
         ''' Uniformly sample (s,a,r,s') experiences from the replay dataset.
 
@@ -126,10 +121,6 @@ class ReplayMemoryHDF5(object):
 
         return self.state[indices], self.ahist[indices], self.action[next_indices], self.reward[next_indices], next_states, self.ahist[next_indices], self.terminal[next_indices]
 
-<<<<<<< HEAD
-    #@profile
-=======
->>>>>>> ffc8433a2bf0819b64511c281371b3a9ab18844e
     def store_tuple(self, prevstate, prevahist, action, reward, state, ahist, terminal=False):
         ''' Stores an experience tuple into the replay dataset, i.e., a 
         triple (action, reward, state) where |state| is the result of the

@@ -16,30 +16,49 @@ class DQNAgent(object):
 
     def __init__(self, settings):
 
-        self.random_state = np.random.RandomState(settings['seed_agent'])
-        self.batch_size = settings['batch_size']
-        self.n_frames = settings['n_frames']
-        self.epsilon = settings['epsilon'] # exploration
-        self.epsilon_decay = settings['epsilon_decay'] # RMSprop parameter
-        self.eval_epsilon = settings['eval_epsilon'] # exploration during evaluation
-        self.viz = settings['viz'] # whether to visualize the state/observation, False when not supported by simulator
-        self.initial_exploration = settings['initial_exploration'] # of iterations during initial exploration
+        """
+        The learning agent is responsible for communicating and moving
+        data between the three modules: Learner, Simulator, Memory
+
+        settings format:
+        -seed_agent: the random seed used by the DQNAgent (passed around 
+        """
+
+        # set up the setting parameters
+        self.random_state = np.random.RandomState(settings.get('seed_agent', 1)) # change to a new random seed
+
         self.iterations = settings['iterations']
-        self.eval_iterations = settings['eval_iterations']
-        self.eval_every = settings['eval_every']
-        self.print_every = settings['print_every']
-        self.save_dir = settings['save_dir']
-        self.save_every = settings['save_every']
-        self.learn_freq = settings['learn_freq']
+        self.batch_size = settings.get('batch_size', 32) # is 32 a good default here?
+        self.n_frames = settings.get('n_frames', 1)
+        self.iterations = settings.get('iterations', 1000000)
+
+        # 
+        self.epsilon = settings.get('epsilon', 1.0) # exploration
+        # TODO: is epsilon_decay really and RMPSprop param? This is an eps-greedy policy param right?
+        self.epsilon_decay = settings.get('epsilon_decay', 0.00001) # RMSprop parameter
+        self.eval_epsilon = settings.get('eval_epsilon', 0.0) # exploration during evaluation
+        self.initial_exploration = settings.get('initial_exploration', 10000) # of iterations during initial exploration
+
+        self.viz = settings.get('viz', False) # whether to visualize the state/observation, False when not supported by simulator
+
+        self.eval_iterations = settings.get('eval_iterations', 500)
+        self.eval_every = settings.get('eval_every', 5000)
+        self.print_every = settings.get('print_every', 5000)
+        self.save_dir = settings.get('save_dir', '.')
+        self.save_every = settings.get('save_every', 5000)
+        # TODO: what is this param?
+        self.learn_freq = settings.get('learn_freq', 1) 
 
     def save(self,obj,name):
         ''' function to save a file as pickle '''
+        # TODO: don't you need to close the I/O stream?
         pickle.dump(obj, open(name, "wb"))
 
     def load(self,name):
         ''' function to load a pickle file '''
         return pickle.load(open(name, "rb"))
 
+    # TODO: should be able to pass in custom policies in here
     def policy(self, learner, simulator, s, ahist, epsilon = 0):
         ''' e-greedy policy '''
         if self.random_state.rand() < epsilon:
@@ -242,10 +261,6 @@ class DQNAgent(object):
         print('Done')
 
 
-<<<<<<< HEAD
-    #@profile
-=======
->>>>>>> ffc8433a2bf0819b64511c281371b3a9ab18844e
     def perceive(self, learner, memory, simulator, train=True, initial_exporation=False, custom_policy=None):
         ''' 
         one iteration in training or evaluation mode - assumes s0 and ahist0 have already been retrieved 

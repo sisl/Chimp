@@ -207,6 +207,7 @@ class Learner(object):
         ''' save training history '''
         train_hist = np.array([range(len(self.train_rewards)),self.train_losses,self.train_rewards, self.train_qval_avgs, self.train_episodes, self.train_times]).T
         eval_hist = np.array([range(len(self.val_rewards)),self.val_losses,self.val_rewards, self.val_qval_avgs, self.val_episodes, self.val_times]).T
+        # TODO: why is this here and not in agent?
         np.savetxt(path + '/training_hist.csv', train_hist, delimiter=',')
         np.savetxt(path + '/evaluation_hist.csv', eval_hist, delimiter=',')
 

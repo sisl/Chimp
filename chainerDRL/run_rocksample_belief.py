@@ -25,14 +25,14 @@ print('Setting training parameters...')
 settings = {
 
     # agent settings
-    'batch_size' : 32,
-    'print_every' : 5000,
+    'batch_size' : 16,
+    'print_every' : 500,
     'save_dir' : 'results/nets_rocksample_belief_rmsprop',
-    'iterations' : 500000,
-    'eval_iterations' : 1000,
-    'eval_every' : 5000,
-    'save_every' : 5000,
-    'initial_exploration' : 10000,
+    'iterations' : 15000,
+    'eval_iterations' : 100,
+    'eval_every' : 500,
+    'save_every' : 500,
+    'initial_exploration' : 500,
     'epsilon_decay' : 0.00001, # subtract from epsilon every step
     'eval_epsilon' : 0, # epsilon used in evaluation, 0 means no random actions
     'epsilon' : 1.0,  # Initial exploratoin rate
@@ -53,7 +53,7 @@ settings = {
     'clip_reward' : 1, # value to clip reward values to
     'target_net_update' : 1000, # update the update-generating target net every fixed number of iterations
     'double_DQN' : False, # use Double DQN (based on Deep Mind paper)
-    'optim_name' : 'RMSprop', # currently supports "RMSprop", "ADADELTA", "ADAM" and "SGD"'
+    'optim_name' : 'ADAM', # currently supports "RMSprop", "ADADELTA", "ADAM" and "SGD"'
     'gpu' : False,
     'reward_rescale': False,
 
@@ -84,23 +84,27 @@ class Linear(Chain):
 
     def __init__(self):
         super(Linear, self).__init__(
-            l1=F.Bilinear(simulator.model_dims[0] * settings["n_frames"], settings["n_frames"], 200),
-            l2=F.Linear(200, 100, wscale=np.sqrt(2)),
-            l3=F.Linear(100, 100, wscale=np.sqrt(2)),
-            l4=F.Linear(100, 200, wscale=np.sqrt(2)),
-            l5=F.Linear(200, 100, wscale=np.sqrt(2)),
-            l6=F.Linear(100, 50, wscale=np.sqrt(2)),
-            l7=F.Linear(100, simulator.n_actions, wscale = np.sqrt(2))
+            l1=F.Bilinear(simulator.model_dims[0] * settings["n_frames"], settings["n_frames"], 20),
+            l2=F.Linear(20, 10),
+            bn1=L.BatchNormalization(10),
+            l3=F.Linear(10, 10),
+            l4=F.Linear(10, 20),
+            bn2=L.BatchNormalization(20),
+            l5=F.Linear(20, 10),
+            l6=F.Linear(10, 5),
+            l7=F.Linear(5, simulator.n_actions)
         )
 
     def __call__(self, s, action_history):
-        h1 = F.relu(self.l1(s/10,action_history/10))
-        h2 = F.relu(self.l2(h1))
-        h3 = F.relu(self.l3(h2))
-        h4 = F.relu(self.l4(h3))
-        h5 = F.relu(self.l5(h4))
-        h6 = F.relu(self.l6(h5))
-        output = self.l7(h6)
+        h = F.relu(self.l1(s/10,action_history/10))
+        h = F.relu(self.l2(h))
+        h = self.bn1(h)
+        h = F.relu(self.l3(h))
+        h = F.relu(self.l4(h))
+        h = self.bn2(h)
+        h = F.relu(self.l5(h))
+        h = F.relu(self.l6(h))
+        output = self.l7(h)
         return output
 
 net = Linear()
