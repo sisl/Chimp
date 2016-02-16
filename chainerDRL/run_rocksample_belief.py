@@ -33,7 +33,7 @@ settings = {
     'eval_every' : 500,
     'save_every' : 500,
     'initial_exploration' : 500,
-    'epsilon_decay' : 0.00001, # subtract from epsilon every step
+    'epsilon_decay' : 0.0001, # subtract from epsilon every step
     'eval_epsilon' : 0, # epsilon used in evaluation, 0 means no random actions
     'epsilon' : 1.0,  # Initial exploratoin rate
     'learn_freq' : 1,
@@ -42,7 +42,7 @@ settings = {
     'viz' : False,
 
     # replay memory settings
-    'memory_size' : 100000,  # size of replay memory
+    'memory_size' : 10000,  # size of replay memory
     'n_frames' : 1,  # number of frames
 
     # learner settings
