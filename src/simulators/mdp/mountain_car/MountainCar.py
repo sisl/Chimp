@@ -9,6 +9,7 @@ class MountainCar():
     def __init__(self,
                  term_r = 10.0,
                  nonterm_r = -1.0,
+                 height_reward = True,
                  discount = 0.95):
 
         self.actions = np.array([-1.0, 0.0, 1.0])
@@ -23,6 +24,8 @@ class MountainCar():
 
         self.vmin, self.vmax = (-0.07, 0.07)
         self.xmin, self.xmax = (-1.2, 0.6)
+
+        self.height_reward = height_reward
         
 
     def transition(self, s, a):
@@ -31,8 +34,8 @@ class MountainCar():
         """
         sp = self.current_state
         #sp = np.zeros(2, dtype=np.float32)
-        #sp[1] = s[1] + 0.001 * self.actions[a] - 0.0025 * np.cos(3 * s[0])
-        sp[1] = s[1] + 1.0 * self.actions[a] - 0.0025 * np.cos(3 * s[0])
+        sp[1] = s[1] + 0.001 * self.actions[a] - 0.0025 * np.cos(3 * s[0])
+        #sp[1] = s[1] + 1.0 * self.actions[a] - 0.0025 * np.cos(3 * s[0])
         sp[1] = self.vclip(sp[1])
         sp[0] = self.xclip(s[0] + sp[1])
 
@@ -43,10 +46,13 @@ class MountainCar():
         """
         Rewarded for reaching goal state, penalized for all other states
         """
+        r = s[0] if (self.height_reward and s[0] > 0.0) else 0
         if s[0] >= self.xmax:
-            return self.term_r
+            r += self.term_r
         else:
-            return self.nonterm_r
+            r += self.nonterm_r
+        return r
+
 
     def isterminal(self, s):
         if s[0] >= self.xmax:

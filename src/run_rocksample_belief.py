@@ -28,15 +28,16 @@ settings = {
     'batch_size' : 16,
     'print_every' : 500,
     'save_dir' : 'results/nets_rocksample_belief_rmsprop',
-    'iterations' : 15000,
+    'iterations' : 100000,
     'eval_iterations' : 100,
-    'eval_every' : 500,
+    'eval_every' : 1000,
     'save_every' : 500,
     'initial_exploration' : 500,
-    'epsilon_decay' : 0.0001, # subtract from epsilon every step
+    'epsilon_decay' : 0.00001, # subtract from epsilon every step
     'eval_epsilon' : 0, # epsilon used in evaluation, 0 means no random actions
     'epsilon' : 1.0,  # Initial exploratoin rate
     'learn_freq' : 1,
+    'history_sizes' : (1, 1, 1), # sizes of histories to use as nn inputs (o, a, r)
 
     # simulator settings
     'viz' : False,
@@ -96,7 +97,7 @@ class Linear(Chain):
         )
 
     def __call__(self, s, action_history):
-        h = F.relu(self.l1(s/10,action_history/10))
+        h = F.relu(self.l1(s,action_history))
         h = F.relu(self.l2(h))
         h = self.bn1(h)
         h = F.relu(self.l3(h))

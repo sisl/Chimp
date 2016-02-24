@@ -9,7 +9,6 @@ import os
 import numpy as np
 from copy import deepcopy
 import pickle
-import matplotlib.pyplot as plt
 from timeit import default_timer as timer
 
 class DQNAgent(object):
@@ -34,8 +33,7 @@ class DQNAgent(object):
 
         # 
         self.epsilon = settings.get('epsilon', 1.0) # exploration
-        # TODO: is epsilon_decay really and RMPSprop param? This is an eps-greedy policy param right?
-        self.epsilon_decay = settings.get('epsilon_decay', 0.00001) # RMSprop parameter
+        self.epsilon_decay = settings.get('epsilon_decay', 0.00001) # decay in 
         self.eval_epsilon = settings.get('eval_epsilon', 0.0) # exploration during evaluation
         self.initial_exploration = settings.get('initial_exploration', 10000) # of iterations during initial exploration
 
@@ -48,6 +46,9 @@ class DQNAgent(object):
         self.save_every = settings.get('save_every', 5000)
         # TODO: what is this param?
         self.learn_freq = settings.get('learn_freq', 1) 
+
+        self.ohist_size, self.ahist_size, self.rhist_size = settings['history_sizes']
+
 
     def save(self,obj,name):
         ''' function to save a file as pickle '''
@@ -112,7 +113,6 @@ class DQNAgent(object):
         self.state = -1*np.ones((1, self.n_frames, simulator.model_dims[0], simulator.model_dims[1]), dtype=np.float32) # used by get_state() function
         self.s0 = self.get_state(simulator) # get s0 state in a new episode - before running perceive()
 
-    #@profile
     def train(self, learner, memory, simulator):
         ''' wrapper around the training process '''
 
@@ -217,10 +217,12 @@ class DQNAgent(object):
                     local_episode_counter = 0
                     local_iteration_counter = 0
 
+
+                    print "Starting evaluation"
                     for i in xrange(self.eval_iterations):
 
                         reward, loss, qval_avg, episode = self.perceive(learner, memory, simulator, train=False, initial_exporation=False)
-                        
+
                         total_reward += reward
                         total_loss += loss
                         total_qval_avg += qval_avg

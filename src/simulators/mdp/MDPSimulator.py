@@ -22,6 +22,7 @@ class MDPSimulator():
 
         self.model_dims = model.state_shape
 
+        self.n_actions = model.n_actions
 
     def act(self, action):
         """
@@ -36,11 +37,11 @@ class MDPSimulator():
     def reward(self):
         return self.current_reward
 
-    def observe(self):
+    def get_screenshot(self):
         return self.current_state 
 
-    def episode_over(self, state):
-        return self.model.isterminal(state)
+    def episode_over(self):
+        return self.model.isterminal(self.current_state)
 
     def reset_episode(self):
         self.current_state = self.model.initial_state()
@@ -61,9 +62,10 @@ class MDPSimulator():
         # run the simulation
         for i in xrange(nsteps):
             r = self.reward()
-            state = self.observe()
+            #state = self.observe()
+            state = self.get_screenshot()
             rtot += r
-            if self.episode_over(state):
+            if self.episode_over():
                 if verbose:
                     print "Terminal reward: ", r
                     print "Reached terminal state: ", state
@@ -73,7 +75,8 @@ class MDPSimulator():
             if verbose:
                 print "Timestep: ", i
                 print "Reward: ", r
-                print "State: ", state
+                print "State: ", self.current_state
                 print "Action: ", a
+                print "Next State: ", self.next_state
         return rtot
 
