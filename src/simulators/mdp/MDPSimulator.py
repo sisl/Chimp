@@ -16,6 +16,8 @@ class MDPSimulator():
 
         # initalize 
         self.current_state = model.initial_state()
+        self.next_state = model.initial_state()
+        self.last_action = 0
         self.current_reward = 0.0
 
         self.model_dims = model.state_shape
@@ -26,10 +28,10 @@ class MDPSimulator():
         Transitions the model forward by moving
         """
         mdp = self.model
-        s = self.current_state
+        np.copyto(self.current_state, self.next_state)
 
-        self.current_reward = mdp.reward(s, a)
-        self.current_state = mdp.transition(s, action)
+        self.current_reward = mdp.reward(self.current_state, action)
+        self.next_state = mdp.transition(self.current_state, action)
 
     def reward(self):
         return self.current_reward
@@ -42,14 +44,18 @@ class MDPSimulator():
 
     def reset_episode(self):
         self.current_state = self.model.initial_state()
+        self.next_state = self.model.initial_state()
         self.current_reward = 0.0
+
+    def n_actions(self):
+        return self.model.n_actions
          
 
-    def simulate(self, nsteps, controller, verbose=False):
+    def simulate(self, nsteps, policy, verbose=False):
         mdp = self.model
 
         # re-initialize the model
-        model.initialize()
+        self.current_state = self.model.initial_state()
 
         rtot = 0.0
         # run the simulation
@@ -59,14 +65,15 @@ class MDPSimulator():
             rtot += r
             if self.episode_over(state):
                 if verbose:
-                    print "Reached terminal state: ", s
+                    print "Terminal reward: ", r
+                    print "Reached terminal state: ", state
                 break
-            a = controller.action(state)
-            act.act(a)
+            a = policy.action(state)
+            self.act(a)
             if verbose:
                 print "Timestep: ", i
                 print "Reward: ", r
-                print "State: ", s
+                print "State: ", state
                 print "Action: ", a
         return rtot
 
