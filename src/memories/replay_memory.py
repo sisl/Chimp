@@ -25,7 +25,7 @@ import h5py
 class ReplayMemoryHDF5(object):
     ''' Wrapper around a replay dataset residing on disk as HDF5. '''
     
-    def __init__(self, settings, filename='memory.hdf5', overwrite=True):
+    def __init__(self, settings, filename='memory.hdf5', overwrite=True, empty=-1):
 
         filename = settings['save_dir'] + '_' + filename
         self.random_state = np.random.RandomState(settings['seed_memory'])
@@ -92,6 +92,9 @@ class ReplayMemoryHDF5(object):
         self.ahist = np.zeros((self.batch_size, self.ahist_size), dtype=np.int32)
         self.rhist = np.zeros((self.batch_size, self.rhist_size), dtype=np.float32)
 
+        self._emptyint = np.int32(empty)
+        self._emptyfloat = np.float32(empty)
+
     def minibatch(self):
         ''' Uniformly sample (o,a,r,o') experiences from the replay dataset.
 
@@ -116,25 +119,30 @@ class ReplayMemoryHDF5(object):
 
         # TODO: can we get rid of this loop by sorting inidces and then reshaping? 
         for i in xrange(batch_size):
-            starti = indices[i]
-            endi = starti + max_hist
-            endo, enda, endr = starti+ohist_size, starti+ahist_size, starti+rhist_size
+            # all end on the same index
+            endi = indices[i]
+            starti = endi - max_hist
+            # starting indecies if no terminal states
+            starto, starta, startr = endi-ohist_size, endi-ahist_size, endi-rhist_size
 
-            termarr = np.where(self.terminals[starti:endi]==True)[0]
-            termidx = endi
+            # look backwards and find first terminal state
+            termarr = np.where(self.terminals[starti:endi-1]==True)[0]
+            termidx = starti
             if termarr.size is not 0:
-               termidx = termarr[0] + starti + 1
+                termidx = endi - (endi-starti - termarr[-1]) + 1
 
-            endo = termidx if endo > termidx else endo
-            enda = termidx if enda > termidx else enda
-            endr = termidx if endr > termidx else endr
+            # if starts before terminal, change start index
+            starto = termidx if starto < termidx else starto
+            starta = termidx if starta < termidx else starta
+            startr = termidx if startr < termidx else startr
 
-            ohl, ahl, rhl = (endo - starti), (enda - starti), (endr - starti)
-
-            self.ohist[i, :ohl] = self.observations[xrange(starti, endo)]
-            self.ophist[i, :ohl] = self.next_observations[xrange(starti, endo)]
-            self.ahist[i, :ahl] = self.actions[xrange(starti, enda)]
-            self.rhist[i, :rhl] = self.rewards[xrange(starti, endr)]
+            ohl, ahl, rhl = (endi - starto), (endi - starta), (endi - startr)
+        
+            # load from memory
+            self.ohist[i, ohist_size-ohl:] = self.observations[xrange(starto, endi)]
+            self.ophist[i, ohist_size-ohl:] = self.next_observations[xrange(starto, endi)]
+            self.ahist[i, ahist_size-ahl:] = self.actions[xrange(starta, endi)]
+            self.rhist[i, rhist_size-rhl:] = self.rewards[xrange(startr, endi)]
 
         return self.ohist, self.ahist, self.rhist, self.ophist
 
@@ -147,7 +155,7 @@ class ReplayMemoryHDF5(object):
         start_shift = self.random_state.randint(max_hist)
 
         # indices corresponding to ranges from which to sample
-        indices = self.random_state.choice(xrange(self.valid/max_hist-1), size=batch_size, replace=False)
+        indices = self.random_state.choice(xrange(1,self.valid/max_hist), size=batch_size, replace=False)
         # shift all the indices and offset
         indices *= max_hist
         indices += start_shift
@@ -181,9 +189,9 @@ class ReplayMemoryHDF5(object):
         self.valid = min(self.memory_size, self.valid + 1)
         
     def clear_history(self):
-        self.ohist.fill(0.0)
-        self.ophist.fill(0.0)
-        self.ahist.fill(0)
+        self.ohist.fill(self._emptyfloat)
+        self.ophist.fill(self._emptyfloat)
+        self.ahist.fill(self._emptyint)
         self.rhist.fill(0.0)
 
 
@@ -197,13 +205,5 @@ class ReplayMemoryHDF5(object):
         self.observations.attrs['valid'] = self.valid
         self.fp.close()
 
-    """
     def __del__(self):
-        ''' Stores the memory dataset into the file when program ends. '''
-        self.fp['actions'][:] = self.actions
-        self.fp['rewards'][:] = self.rewards
-        self.fp['terminals'][:] = self.terminals
-        self.observations.attrs['head'] = self.head
-        self.observations.attrs['valid'] = self.valid
-        self.fp.close()
-    """
+        self.close()
