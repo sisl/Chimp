@@ -16,7 +16,6 @@ Chimp consists of three main modules: Learner, Simulator and Memory.
 What makes Chimp powerful is that it can handle arbitrary inputs to the deep Q-Netwrok. 
 The user specifies the history lengths for observetations, actions and even rewards that they want to use as inputs to the DQN, and Chimp handles the rest. The specification is in the form of a tuple ```(s_size, a_size, r_size)```. For the DeepMind Atari experiments, this setting would look like (4,0,0), they used four frames per input and no action or reward history. 
 
-
 # Dependencies
 
 Chimp relies on existing deep learning back-ends. Currently only [Chainer](http://chainer.org/) is supported. Support
@@ -26,5 +25,10 @@ The following Python packages are required to use PODRL.
 * [Chainer](https://github.com/pfnet/chainer)
 * NumPy
 
-The creators of this software are: Yegor Tkachenko, Max Egorov, Hao Yi Ong.
+# Authors
 
+The original authors of this software are: Yegor Tkachenko, Max Egorov, Hao Yi Ong.
+
+# License
+
+The software is distributed under the Apache License.
