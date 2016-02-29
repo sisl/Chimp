@@ -54,6 +54,7 @@ settings = {
 
     # learner settings
     'learning_rate' : 0.00025, 
+    'learning_rate_decay' : 1.0,
     'decay_rate' : 0.99, # decay rate for RMSprop, otherwise not used
     'discount' : 0.95, # discount rate for RL
     'clip_err' : False, # value to clip loss gradients to
@@ -104,6 +105,8 @@ class Linear(Chain):
         )
 
     def __call__(self, s, action_history):
+    def __call__(self, data):
+        (ohist, _, _) = data
         h = F.relu(self.l1(s,action_history))
         h = F.relu(self.l2(h))
         h = self.bn1(h)

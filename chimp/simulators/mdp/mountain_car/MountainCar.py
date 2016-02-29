@@ -10,6 +10,7 @@ class MountainCar():
                  term_r = 10.0,
                  nonterm_r = -1.0,
                  height_reward = True,
+                 discrete = False,
                  discount = 0.95):
 
         self.actions = np.array([-1.0, 0.0, 1.0])
@@ -26,6 +27,14 @@ class MountainCar():
         self.xmin, self.xmax = (-1.2, 0.6)
 
         self.height_reward = height_reward
+
+        self.discrete = discrete
+        self.xgrid = 10
+        self.vgrid = 10
+        self.discrete_x = np.linspace(self.xmin, self.xmax, self.xgrid)
+        self.discrete_v = np.linspace(self.vmin, self.vmax, self.vgrid)
+
+        self.sp_discrete = np.zeros(2, dtype=np.float32) 
         
 
     def transition(self, s, a):
@@ -35,9 +44,13 @@ class MountainCar():
         sp = self.current_state
         #sp = np.zeros(2, dtype=np.float32)
         sp[1] = s[1] + 0.001 * self.actions[a] - 0.0025 * np.cos(3 * s[0])
-        #sp[1] = s[1] + 1.0 * self.actions[a] - 0.0025 * np.cos(3 * s[0])
         sp[1] = self.vclip(sp[1])
         sp[0] = self.xclip(s[0] + sp[1])
+
+        if self.discrete:
+            self.sp_discrete[0] = self.find_nearest(self.discrete_x, sp[0])
+            self.sp_discrete[1] = self.find_nearest(self.discrete_v, sp[1])
+            return self.sp_discrete
 
         return sp
 
@@ -63,7 +76,7 @@ class MountainCar():
         return self.n_actions
 
     def initial_state(self):
-        xi = np.random.uniform(self.xmin/2.0, self.xmax/2.0)
+        xi = np.random.uniform(self.xmin, self.xmax*0.9)
         vi = 0.0
         return np.array([xi, vi])
 
@@ -80,3 +93,7 @@ class MountainCar():
 
     def xclip(self, val):
         return self.clip(val, self.xmin, self.xmax)
+
+    def find_nearest(self, vals, target):
+        idx = (np.abs(vals - target)).argmin()
+        return vals[target]

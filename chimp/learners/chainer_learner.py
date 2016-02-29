@@ -27,7 +27,7 @@ class ChainerLearner(object):
 
     def update(self, obs, a, r, obsp, term):
         """
-        Performs a single minim-batch update
+        Performs a single mini-batch update
         """
 
         self.source_net.zerograds()  # reset gradient storage to zero
@@ -149,7 +149,7 @@ class ChainerLearner(object):
         ohist, ahist = self.chainer_var(ohist, volatile=True), self.chainer_var(ahist, volatile=True)
         # evaluate
         qvals = self.source_net(ohist, ahist)
-        return qvals
+        return qvals.data
 
     def forward_gpu(self, obs):
         """
@@ -163,7 +163,7 @@ class ChainerLearner(object):
         ohist, ahist = self.chainer_var(ohist, volatile=True), self.chainer_var(ahist, volatile=True)
         # evaluate
         qvals = self.source_net(ohist, ahist)
-        return qvals
+        return qvals.data.get()
 
     #################################################################  
     #################### Utility Functions ##########################
