@@ -46,7 +46,8 @@ class MDPSimulator():
     def reset_episode(self):
         self.current_state = self.model.initial_state()
         self.next_state = self.model.initial_state()
-        self.current_reward = 0.0
+        # TODO: what's the best way to get the initial reward?
+        self.current_reward = self.model.reward(self.current_state, 0) 
 
     def n_actions(self):
         return self.model.n_actions
