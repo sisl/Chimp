@@ -91,6 +91,7 @@ class ReplayMemoryHDF5(object):
         self.ophist = np.zeros((self.batch_size, self.ohist_size) + obs_shape, dtype=np.float32)
         self.ahist = np.zeros((self.batch_size, self.ahist_size), dtype=np.int32)
         self.rhist = np.zeros((self.batch_size, self.rhist_size), dtype=np.float32)
+        self.thist = np.zeros((self.batch_size, self.ohist_size), dtype=np.float32)
 
         self._emptyint = np.int32(empty)
         self._emptyfloat = np.float32(empty)
@@ -143,8 +144,9 @@ class ReplayMemoryHDF5(object):
             self.ophist[i, ohist_size-ohl:] = self.next_observations[xrange(starto, endi)]
             self.ahist[i, ahist_size-ahl:] = self.actions[xrange(starta, endi)]
             self.rhist[i, rhist_size-rhl:] = self.rewards[xrange(startr, endi)]
+            self.thist[i, ohist_size-ohl:] = self.terminals[xrange(starto, endi)]
 
-        return self.ohist, self.ahist, self.rhist, self.ophist
+        return self.ohist, self.ahist, self.rhist, self.ophist, self.thist
 
 
     def get_indices(self, batch_size):
@@ -193,6 +195,7 @@ class ReplayMemoryHDF5(object):
         self.ophist.fill(self._emptyfloat)
         self.ahist.fill(self._emptyint)
         self.rhist.fill(0.0)
+        self.thist.fill(False)
 
 
 
