@@ -37,8 +37,10 @@ class ChainerLearner(object):
 
         qvals.backward() # propagate the loss gradient through the net
         self.optimizer.update() # carry out parameter updates based on the distributed gradients
-
-        return loss, qvals 
+        if self.gpu:
+            return loss, qvals.data.get()
+        else:
+            return loss, qvals.data
 
 
     def forward_loss(self, obs, a, r, obsp, term):
@@ -69,7 +71,7 @@ class ChainerLearner(object):
         target_q_max = np.max(target_q_all.data.get(), axis=1) # max Q for each entry in mini-batch
 
         # compute the target values for each entry in mini-batch 
-        target_q_vals = r + self.discount * target_q_max * term 
+        target_q_vals = r + self.discount * target_q_max * np.invert(term)
 
         # compute the source q-vals
         source_q_all = self.source_net(ohist, ahist) # forward prop
@@ -105,7 +107,7 @@ class ChainerLearner(object):
         target_q_max = np.max(target_q_all.data, axis=1)
 
         # compute the target values for each entry in mini-batch 
-        target_q_vals = r + self.discount * target_q_max * term 
+        target_q_vals = r + self.discount * target_q_max * np.invert(term)
 
         # compute the source q-vals
         source_q_all = self.source_net(ohist, ahist) # forward prop
