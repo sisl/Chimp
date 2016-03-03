@@ -28,12 +28,12 @@ settings = {
 
     # agent settings
     'batch_size' : 32,
-    'print_every' : 1000,
+    'print_every' : 100,
     'save_dir' : 'results',
-    'iterations' : 30000,
+    'iterations' : 3000,
     'eval_iterations' : 100,
-    'eval_every' : 1000,
-    'save_every' : 1000,
+    'eval_every' : 100,
+    'save_every' : 100,
     'initial_exploration' : 5000,
     'epsilon_decay' : 0.00001, # subtract from epsilon every step
     'eval_epsilon' : 0, # epsilon used in evaluation, 0 means no random actions
@@ -55,7 +55,7 @@ settings = {
     'discount' : 0.95, # discount rate for RL
     'clip_err' : False, # value to clip loss gradients to
     'clip_reward' : 1, # value to clip reward values to
-    'target_net_update' : 1000, # update the update-generating target net every fixed number of iterations
+    'target_net_update' : 100, # update the update-generating target net every fixed number of iterations
     'double_DQN' : False, # use Double DQN (based on Deep Mind paper)
     'optim_name' : 'ADAM', # currently supports "RMSprop", "ADADELTA", "ADAM" and "SGD"'
     'gpu' : False,

@@ -99,6 +99,9 @@ class DQNAgent(object):
                 if verbose:
                     print "Evaluation, total reward: ", sim_r, ", Total runtime: ", sim_time
 
+            if iteration % self.target_net_update == 0:
+                learner.copy_net_to_target_net()
+
             self.epsilon -= self.epsilon_decay
             self.epsilon = 0.1 if self.epsilon < 0.1 else self.epsilon
 
@@ -250,6 +253,7 @@ class DQNAgent(object):
             self.save_every = settings.get('save_every', 5000)
             # TODO: what is this param?
             self.learn_freq = settings.get('learn_freq', 1) 
+            self.target_net_update = settings.get('target_net_update', 5000)
 
             self.ohist_size, self.ahist_size, self.rhist_size = settings.get('history_sizes', (1,0,0))
             self.ahist_size = 1 if self.ahist_size == 0 else self.ahist_size

@@ -8,6 +8,8 @@ import numpy as np
 
 import pickle # used to save the nets
 
+from copy import deepcopy
+
 class DQNLearner(object):
 
     def __init__(self, settings, custom_learner):
@@ -45,7 +47,7 @@ class DQNLearner(object):
 
     def copy_net_to_target_net(self):
         ''' update target net with the current net '''
-        self.target_net = deepcopy(self.net)
+        self.custom_learner.target_net = deepcopy(self.custom_learner.source_net)
 
     def save(self,obj,name):
         pickle.dump(obj, open(name, "wb"))
