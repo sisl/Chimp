@@ -28,13 +28,13 @@ settings = {
 
     # agent settings
     'batch_size' : 32,
-    'print_every' : 100,
+    'print_every' : 1000,
     'save_dir' : 'results',
-    'iterations' : 3000,
+    'iterations' : 300000,
     'eval_iterations' : 100,
-    'eval_every' : 100,
-    'save_every' : 100,
-    'initial_exploration' : 5000,
+    'eval_every' : 1000,
+    'save_every' : 1000,
+    'initial_exploration' : 10000,
     'epsilon_decay' : 0.00001, # subtract from epsilon every step
     'eval_epsilon' : 0, # epsilon used in evaluation, 0 means no random actions
     'epsilon' : 1.0,  # Initial exploratoin rate
@@ -46,16 +46,16 @@ settings = {
     'viz' : False,
 
     # replay memory settings
-    'memory_size' : 10000,  # size of replay memory
+    'memory_size' : 20000,  # size of replay memory
     'n_frames' : 1,  # number of frames
 
     # learner settings
-    'learning_rate' : 0.00025, 
+    'learning_rate' : 0.0001,
     'decay_rate' : 0.99, # decay rate for RMSprop, otherwise not used
     'discount' : 0.95, # discount rate for RL
     'clip_err' : False, # value to clip loss gradients to
-    'clip_reward' : 1, # value to clip reward values to
-    'target_net_update' : 100, # update the update-generating target net every fixed number of iterations
+    'clip_reward' : False, # value to clip reward values to
+    'target_net_update' : 1000, # update the update-generating target net every fixed number of iterations
     'double_DQN' : False, # use Double DQN (based on Deep Mind paper)
     'optim_name' : 'ADAM', # currently supports "RMSprop", "ADADELTA", "ADAM" and "SGD"'
     'gpu' : False,
