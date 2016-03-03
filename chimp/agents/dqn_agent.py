@@ -136,7 +136,6 @@ class DQNAgent(object):
             iobs = simulator.get_screenshot().copy()
             self.empty_history()
             self.initial_obs(iobs)
-            print "\nReached terminal state in step\n"
         else:
             simulator.act(a)
             obsp = simulator.get_screenshot().copy()

@@ -83,7 +83,7 @@ class TestNet(Chain):
             bn1=L.BatchNormalization(10),
             l3=F.Linear(10, 10),
             l4=F.Linear(10, 10),
-            bn2=L.BatchNormalization(10)
+            bn2=L.BatchNormalization(10),
             lout=F.Linear(10, simulator.n_actions)
         )
         self.train = True
@@ -95,7 +95,7 @@ class TestNet(Chain):
         h = F.relu(self.l1(ohist))
         h = F.relu(self.l2(h))
         h = self.bn1(h, test=not self.train)
-        h = F.relu(self.l3(ohist))
+        h = F.relu(self.l3(h))
         h = F.relu(self.l4(h))
         h = self.bn2(h, test=not self.train)
         output = self.lout(h)
