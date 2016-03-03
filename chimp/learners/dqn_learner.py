@@ -55,7 +55,7 @@ class DQNLearner(object):
 
     def save_net(self,name):
         ''' save a net to a path '''
-        self.save(self.net,name)
+        self.save(self.custom_learner.source_net,name)
 
     def load_net(self,net):
         ''' load in a net from path or a variable'''

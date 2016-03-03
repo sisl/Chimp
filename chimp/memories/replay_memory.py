@@ -91,7 +91,7 @@ class ReplayMemoryHDF5(object):
         self.ophist = np.zeros((self.batch_size, self.ohist_size) + obs_shape, dtype=np.float32)
         self.ahist = np.zeros((self.batch_size, self.ahist_size), dtype=np.int32)
         self.rhist = np.zeros((self.batch_size, self.rhist_size), dtype=np.float32)
-        self.thist = np.zeros((self.batch_size, self.ohist_size), dtype=np.float32)
+        self.thist = np.zeros((self.batch_size, self.ohist_size), dtype=np.bool)
 
         self._emptyint = np.int32(empty)
         self._emptyfloat = np.float32(empty)
