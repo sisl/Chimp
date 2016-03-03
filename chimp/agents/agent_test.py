@@ -81,16 +81,23 @@ class TestNet(Chain):
             l1=F.Linear(settings['model_dims'][1], 20, bias=0.0),
             l2=F.Linear(20, 10, bias=0.0),
             bn1=L.BatchNormalization(10),
+            l3=F.Linear(10, 10),
+            l4=F.Linear(10, 10),
+            bn2=L.BatchNormalization(10)
             lout=F.Linear(10, simulator.n_actions)
         )
         self.train = True
         # initialize avg_var to prevent divide by zero
         self.bn1.avg_var.fill(0.1),
+        self.bn2.avg_var.fill(0.1),
 
     def __call__(self, ohist, ahist):
         h = F.relu(self.l1(ohist))
         h = F.relu(self.l2(h))
         h = self.bn1(h, test=not self.train)
+        h = F.relu(self.l3(ohist))
+        h = F.relu(self.l4(h))
+        h = self.bn2(h, test=not self.train)
         output = self.lout(h)
         return output
 
