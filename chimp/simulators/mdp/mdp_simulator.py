@@ -49,6 +49,9 @@ class MDPSimulator():
         # TODO: what's the best way to get the initial reward?
         self.current_reward = self.model.reward(self.current_state, 0) 
 
+    def n_actions(self):
+        return self.model.n_actions
+         
 
     def simulate(self, nsteps, policy, verbose=False):
         mdp = self.model
