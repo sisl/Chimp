@@ -35,7 +35,7 @@ settings = {
     'eval_every' : 1000,
     'save_every' : 1000,
     'initial_exploration' : 10000,
-    'epsilon_decay' : 0.00001, # subtract from epsilon every step
+    'epsilon_decay' : 0.000005, # subtract from epsilon every step
     'eval_epsilon' : 0, # epsilon used in evaluation, 0 means no random actions
     'epsilon' : 1.0,  # Initial exploratoin rate
     'learn_freq' : 1,
