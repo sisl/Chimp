@@ -130,13 +130,17 @@ class DQNAgent(object):
         obsp = simulator.get_screenshot().copy()
 
         term = False
+        obsp = None
         if simulator.episode_over():
             term = True
+            obsp = obs.copy()
             simulator.reset_episode()
             iobs = simulator.get_screenshot().copy()
             self.empty_history()
             self.initial_obs(iobs)
         else:
+            simulator.act(a)
+            obsp = simulator.get_screenshot().copy()
             self.update_history(obsp, a)
 
         if self.viz: # move the image to the screen / shut down the game if display is closed
@@ -189,17 +193,17 @@ class DQNAgent(object):
             ohist, ahist = self.eval_ohist, self.eval_ahist
             r = simulator.reward()
             a = self.policy((ohist, ahist), epsilon)
-            simulator.act(a)
-
-            rtot += r # make this discounted?
             if simulator.episode_over():
                 simulator.reset_episode()
                 iobs = simulator.get_screenshot().copy()
                 self.empty_eval_history()
                 self.initial_eval_obs(iobs)
             else:
+                simulator.act(a)
                 obsp = simulator.get_screenshot().copy()
                 self.update_eval_history(obsp, a)
+
+            rtot += r # make this discounted?
 
             if self.viz: # move the image to the screen / shut down the game if display is closed
                 simulator.refresh_viz_display()
