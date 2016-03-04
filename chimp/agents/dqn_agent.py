@@ -34,6 +34,10 @@ class DQNAgent(object):
 
         self.set_params(settings)
 
+        self.n_epochs = self.iterations / float(memory.memory_size)
+        self.loss = np.zeros(self.iterations)
+        self.q_ave = np.zeros(self.iterations)
+        self.r_eval = [] 
 
     def policy(self, obs, epsilon):
         """
@@ -84,6 +88,8 @@ class DQNAgent(object):
             self.step()
             # minibatch update for DQN
             loss, qvals = self.batch_update()
+            self.loss[iteration] = loss
+            self.q_ave[iteration] = np.mean(qvals)
 
             if iteration % self.print_every == 0 and verbose:
                 print "Iteration: ",  iteration, ", Loss: ", loss, " Q-Values: ", np.mean(qvals,0), ", Time since print: ", timer() - last_print, ", Total runtime: ", timer() - start_time, ", epsilon: ", self.epsilon
@@ -96,6 +102,7 @@ class DQNAgent(object):
 
             if iteration % self.eval_every == 0: # evaluation
                 sim_r, sim_time = self.simulate(self.eval_iterations, self.eval_epsilon)
+                self.r_eval.append(sim_r)
                 if verbose:
                     print "Evaluation, total reward: ", sim_r, ", Total runtime: ", sim_time
 
@@ -109,8 +116,8 @@ class DQNAgent(object):
 
         memory.close()
 
-        learner.overall_time = timer() - start_time
-        print('Overall training + evaluation time: '+ str(learner.overall_time))
+        run_time = timer() - start_time
+        print('Overall training + evaluation time: '+ str(run_time))
         self.save(learner,'%s/learner_final.p' % self.save_dir)
 
 
@@ -232,44 +239,66 @@ class DQNAgent(object):
         simulator.reset_episode()
 
 
+    def plot_loss(self):
+        try:
+            from matplotlib import pyplot
+        except ImportError:
+            "Can not plot loss, matplotlib required"
+        pyplot.plot(self.loss)
+        pyplot.xlabel("Iteration")
+        pyplot.ylabel("Loss")
+        pyplot.show()
+
+    def plot_eval_reward(self):
+        try:
+            from matplotlib import pyplot
+        except ImportError:
+            "Can not plot loss, matplotlib required"
+        pyplot.plot(self.eval_every * np.arange(len(self.r_eval)), self.r_eval)
+        pyplot.xlabel("Reward")
+        pyplot.ylabel("Loss")
+        pyplot.show()
+
+
+
     def set_params(self, settings):
-            # set up the setting parameters
-            self.random_state = np.random.RandomState(settings.get('seed_agent', None)) # change to a new random seed
+        # set up the setting parameters
+        self.random_state = np.random.RandomState(settings.get('seed_agent', None)) # change to a new random seed
 
-            self.batch_size = settings.get('batch_size', 32) 
-            self.n_frames = settings.get('n_frames', 1)
-            self.iterations = settings.get('iterations', 1000000)
+        self.batch_size = settings.get('batch_size', 32) 
+        self.n_frames = settings.get('n_frames', 1)
+        self.iterations = settings.get('iterations', 1000000)
 
-            # 
-            self.epsilon = settings.get('epsilon', 1.0) # exploration
-            self.epsilon_decay = settings.get('epsilon_decay', 0.00001) # decay in 
-            self.eval_epsilon = settings.get('eval_epsilon', 0.0) # exploration during evaluation
-            self.initial_exploration = settings.get('initial_exploration', 10000) # of iterations during initial exploration
+        # 
+        self.epsilon = settings.get('epsilon', 1.0) # exploration
+        self.epsilon_decay = settings.get('epsilon_decay', 0.00001) # decay in 
+        self.eval_epsilon = settings.get('eval_epsilon', 0.0) # exploration during evaluation
+        self.initial_exploration = settings.get('initial_exploration', 10000) # of iterations during initial exploration
 
-            self.viz = settings.get('viz', False) # whether to visualize the state/observation, False when not supported by simulator
+        self.viz = settings.get('viz', False) # whether to visualize the state/observation, False when not supported by simulator
 
-            self.eval_iterations = settings.get('eval_iterations', 500)
-            self.eval_every = settings.get('eval_every', 5000)
-            self.print_every = settings.get('print_every', 5000)
-            self.save_dir = settings.get('save_dir', '.')
-            self.save_every = settings.get('save_every', 5000)
-            # TODO: what is this param?
-            self.learn_freq = settings.get('learn_freq', 1) 
-            self.target_net_update = settings.get('target_net_update', 5000)
+        self.eval_iterations = settings.get('eval_iterations', 500)
+        self.eval_every = settings.get('eval_every', 5000)
+        self.print_every = settings.get('print_every', 5000)
+        self.save_dir = settings.get('save_dir', '.')
+        self.save_every = settings.get('save_every', 5000)
+        # TODO: what is this param?
+        self.learn_freq = settings.get('learn_freq', 1) 
+        self.target_net_update = settings.get('target_net_update', 5000)
 
-            self.ohist_size, self.ahist_size, self.rhist_size = settings.get('history_sizes', (1,0,0))
-            self.ahist_size = 1 if self.ahist_size == 0 else self.ahist_size
-            self.ohist_size = 1 if self.ohist_size == 0 else self.ohist_size
+        self.ohist_size, self.ahist_size, self.rhist_size = settings.get('history_sizes', (1,0,0))
+        self.ahist_size = 1 if self.ahist_size == 0 else self.ahist_size
+        self.ohist_size = 1 if self.ohist_size == 0 else self.ohist_size
 
-            self.ohist = np.zeros((self.ohist_size,) + self.simulator.model_dims, dtype=np.float32)
-            self.ahist = np.zeros(self.ahist_size, dtype=np.int32)
-            self.rev_ohist = np.zeros((self.ohist_size,) + self.simulator.model_dims, dtype=np.float32)
-            self.rev_ahist = np.zeros(self.ahist_size, dtype=np.int32)
+        self.ohist = np.zeros((self.ohist_size,) + self.simulator.model_dims, dtype=np.float32)
+        self.ahist = np.zeros(self.ahist_size, dtype=np.int32)
+        self.rev_ohist = np.zeros((self.ohist_size,) + self.simulator.model_dims, dtype=np.float32)
+        self.rev_ahist = np.zeros(self.ahist_size, dtype=np.int32)
 
-            self.eval_ohist = np.zeros((self.ohist_size,) + self.simulator.model_dims, dtype=np.float32)
-            self.eval_ahist = np.zeros(self.ahist_size, dtype=np.int32)
-            self.rev_eval_ohist = np.zeros((self.ohist_size,) + self.simulator.model_dims, dtype=np.float32)
-            self.rev_eval_ahist = np.zeros(self.ahist_size, dtype=np.int32)
+        self.eval_ohist = np.zeros((self.ohist_size,) + self.simulator.model_dims, dtype=np.float32)
+        self.eval_ahist = np.zeros(self.ahist_size, dtype=np.int32)
+        self.rev_eval_ohist = np.zeros((self.ohist_size,) + self.simulator.model_dims, dtype=np.float32)
+        self.rev_eval_ahist = np.zeros(self.ahist_size, dtype=np.int32)
 
     #################################################################
     ################# History utility functions #####################
