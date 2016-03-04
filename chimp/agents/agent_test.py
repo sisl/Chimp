@@ -17,6 +17,8 @@ from chimp.simulators.mdp.mdp_simulator import MDPSimulator
 
 from chimp.memories.replay_memory import ReplayMemoryHDF5
 
+from chimp.utils.policies import *
+
 import numpy as np
 
 import chainer
