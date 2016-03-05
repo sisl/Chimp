@@ -164,9 +164,11 @@ class DQNAgent(object):
         r = rhist[:,-1]
         t = term[:,-1]
         oahist = None
+        # TODO: this indexing is a hack to deal with single sample history
+        # Using the first history entry of the minibatch (there is only one) - could do this with reshape as well
         if self.ahist_size == 0:
-            oahist = (ohist, None)
-            oaphist = (ophist, None)
+            oahist = (ohist[:,0], None)
+            oaphist = (ophist[:,0], None)
         else:
             oahist = (ohist, ahist[:self.ahist_size])
             oaphist = (ophist, ahist[1:self.ahist_size])
