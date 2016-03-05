@@ -57,7 +57,12 @@ class MDPSimulator():
         mdp = self.model
 
         # re-initialize the model
-        self.current_state = self.model.initial_state()
+        self.reset_episode()
+
+        input_state = np.zeros((1,)+self.model_dims, dtype=np.float32)
+
+        x_trace = np.zeros(nsteps)
+        v_trace = np.zeros(nsteps)
 
         rtot = 0.0
         # run the simulation
@@ -65,13 +70,16 @@ class MDPSimulator():
             r = self.reward()
             #state = self.observe()
             state = self.get_screenshot()
+            x_trace[i] = state[0]
+            v_trace[i] = state[1]
             rtot += r
             if self.episode_over():
                 if verbose:
                     print "Terminal reward: ", r
                     print "Reached terminal state: ", state
                 break
-            a = policy.action(state)
+            input_state[0,:] = state
+            a = policy.action((input_state, None))
             self.act(a)
             if verbose:
                 print "Timestep: ", i
@@ -79,5 +87,5 @@ class MDPSimulator():
                 print "State: ", self.current_state
                 print "Action: ", a
                 print "Next State: ", self.next_state
-        return rtot
+        return rtot, x_trace, v_trace
 

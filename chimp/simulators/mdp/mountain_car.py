@@ -1,7 +1,7 @@
 import numpy as np
 
 #################################################################
-# Implements the simulator class for MDPs 
+# Implements the mountain car MDP 
 #################################################################
 
 class MountainCar():
@@ -72,13 +72,10 @@ class MountainCar():
             return True
         return False
 
-    def n_actions(self):
-        return self.n_actions
-
     def initial_state(self):
         xi = np.random.uniform(self.xmin, self.xmax*0.9)
         vi = 0.0
-        return np.array([xi, vi])
+        return np.array([xi, vi], dtype=np.float32)
 
 
     #################################################################  
