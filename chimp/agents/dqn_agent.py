@@ -166,7 +166,7 @@ class DQNAgent(object):
         oahist = None
         # TODO: this indexing is a hack to deal with single sample history
         # Using the first history entry of the minibatch (there is only one) - could do this with reshape as well
-        if self.ahist_size == 0:
+        if self.ahist_size == 0 or self.ohist_size == 1:
             oahist = (ohist[:,0], None)
             oaphist = (ophist[:,0], None)
         else:
