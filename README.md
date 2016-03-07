@@ -31,4 +31,4 @@ The original authors of this software are: Yegor Tkachenko, Max Egorov, Hao Yi O
 
 # License
 
-The software is distributed under the Apache License.
+The software is distributed under the Apache License 2.0
