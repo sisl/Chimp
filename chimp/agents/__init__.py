@@ -1,3 +1,3 @@
 ''' Implements Agent '''
 
-from agents import DQNAgent
+from dqn_agent import DQNAgent

@@ -131,7 +131,6 @@ class DQNAgent(object):
         simulator = self.simulator
 
         obs = simulator.get_screenshot().copy()
-        r = simulator.reward()
         a = self.policy((self.ohist, self.ahist), self.epsilon)
 
         term = False
@@ -147,6 +146,8 @@ class DQNAgent(object):
             simulator.act(a)
             obsp = simulator.get_screenshot().copy()
             self.update_history(obsp, a)
+
+        r = simulator.reward()
 
         if self.viz: # move the image to the screen / shut down the game if display is closed
             simulator.refresh_viz_display()
@@ -186,7 +187,7 @@ class DQNAgent(object):
         """
         simulator = self.evaluator # use a different simulator to prevent breaks 
         simulator.reset_episode()
-        # add initial observation to observatin history
+        # add initial observation to observation history
         iobs = simulator.get_screenshot().copy()
         self.initial_eval_obs(iobs)
 
@@ -198,7 +199,6 @@ class DQNAgent(object):
         for i in xrange(nsteps):
             # generate reward and step the simulator
             ohist, ahist = self.eval_ohist, self.eval_ahist
-            r = simulator.reward()
             a = self.policy((ohist, ahist), epsilon)
             if simulator.episode_over():
                 simulator.reset_episode()
@@ -209,6 +209,8 @@ class DQNAgent(object):
                 simulator.act(a)
                 obsp = simulator.get_screenshot().copy()
                 self.update_eval_history(obsp, a)
+
+            r = simulator.reward()
 
             rtot += r # make this discounted?
 
@@ -228,9 +230,9 @@ class DQNAgent(object):
         for i in xrange(nsamples):
             # generate o, a, r, o' tuples
             obs = simulator.get_screenshot().copy() 
-            r = simulator.reward()
             a = self.rollout_policy.action(obs)
             simulator.act(a)
+            r = simulator.reward()
             obsp = simulator.get_screenshot().copy() 
             term = False
             if simulator.episode_over():

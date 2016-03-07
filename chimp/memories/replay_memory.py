@@ -21,13 +21,17 @@ from the location one step forward.
 
 import numpy as np
 import h5py
+import os
 
 class ReplayMemoryHDF5(object):
     ''' Wrapper around a replay dataset residing on disk as HDF5. '''
     
     def __init__(self, settings, filename='memory.hdf5', overwrite=True, empty=-1):
 
-        filename = settings['save_dir'] + '_' + filename
+        if not os.path.exists(settings['save_dir']):
+            os.makedirs(settings['save_dir'])
+
+        filename = settings['save_dir'] + '/' + filename
         self.random_state = np.random.RandomState(settings['seed_memory'])
         self.ohist_size, self.ahist_size, self.rhist_size = settings['history_sizes']
 
@@ -196,8 +200,6 @@ class ReplayMemoryHDF5(object):
         self.ahist.fill(self._emptyint)
         self.rhist.fill(0.0)
         self.thist.fill(False)
-
-
 
     def close(self):
         ''' Stores the memory dataset into the file when program ends. '''
