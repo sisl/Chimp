@@ -13,7 +13,7 @@ from copy import deepcopy
 
 import pickle # used to save the nets
 
-class ChainerLearner(object):
+class ChainerBackend(object):
 
     def __init__(self, settings, net = None):
 
@@ -81,7 +81,7 @@ class ChainerLearner(object):
         qdiff = source_q_vals - target_q_vals 
 
         # distribute the loss gradient into the shape of the net's output
-        dQ = np.zeros(approx_q_all.data.shape, dtype=np.float32) 
+        dQ = np.zeros(source_q_all.data.shape, dtype=np.float32) 
         dQ[np.arange(dQ.shape[0]), a] = qdiff
 
         # set as the output grad layer
@@ -172,7 +172,7 @@ class ChainerLearner(object):
     #################################################################  
 
     def to_gpu(self, var):
-        if obs is None:
+        if var is None:
             return None
         return cuda.to_gpu(var)
 

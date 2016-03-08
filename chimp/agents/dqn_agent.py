@@ -9,7 +9,7 @@ from chimp.learners.dqn_learner import DQNPolicy
 
 class DQNAgent(object):
 
-    def __init__(self, learner, memory, simulator, settings, rollout=None):
+    def __init__(self, learner, memory, simulator, settings, dqn_policy=None, rollout_policy=None):
 
         """
         The learning agent is responsible for communicating and moving
@@ -19,7 +19,7 @@ class DQNAgent(object):
         - memory: expereince replay memory that can be minibatch sampled
         - simulator: simulates the environemnt
         - settings: hyper parameters for training
-        - rollout: rollout policy, random by default
+        - rollout_policy: rollout policy, random by default
         """
 
         self.learner = learner
@@ -27,9 +27,12 @@ class DQNAgent(object):
         self.simulator = simulator # for populating the experience replay
         self.evaluator = deepcopy(simulator) # for evaluation
 
-        self.dqn_policy = DQNPolicy(learner)
-        self.rollout_policy = rollout
-        if rollout is None:
+        self.dqn_policy = dqn_policy
+        if dqn_policy is None:
+            self.dqn_policy = DQNPolicy(learner)
+
+        self.rollout_policy = rollout_policy
+        if rollout_policy is None:
             self.rollout_policy = RandomPolicy(simulator.n_actions)
 
         self.set_params(settings)

@@ -12,7 +12,7 @@ from chimp.utils.policies import DQNPolicy
 
 class DQNLearner(object):
 
-    def __init__(self, settings, custom_learner):
+    def __init__(self, settings, backend):
 
         """
         Functions that must be defined by the custom learner:
@@ -26,9 +26,9 @@ class DQNLearner(object):
         - target_net: generates target Q-vals
         """
 
-        self.custom_learner = custom_learner
+        self.backend = backend
 
-        self.dqn_policy = DQNPolicy(custom_learner)
+        self.dqn_policy = DQNPolicy(backend)
 
         self.clip_reward = settings.get('clip_reward', False)
         self.reward_rescale = settings.get('reward_rescale', False)
@@ -37,17 +37,17 @@ class DQNLearner(object):
 
     def update(self, obs, a, r, obsp, term):
         r = self.pre_process_reward(r)
-        return self.custom_learner.update(obs, a, r, obsp, term)
+        return self.backend.update(obs, a, r, obsp, term)
 
     def forward_loss(self, obs, a, r, obsp, term):
-        return self.custom_learner.forward_loss(obs, a, r, obsp, term)
+        return self.backend.forward_loss(obs, a, r, obsp, term)
 
     def forward(self, obs):
-        return self.custom_learner.forward(obs)
+        return self.backend.forward(obs)
 
     def copy_net_to_target_net(self):
         ''' update target net with the current net '''
-        self.custom_learner.target_net = deepcopy(self.custom_learner.source_net)
+        self.backend.target_net = deepcopy(self.backend.source_net)
 
     def save(self,obj,name):
         pickle.dump(obj, open(name, "wb"))
@@ -57,13 +57,13 @@ class DQNLearner(object):
 
     def save_net(self,name):
         ''' save a net to a path '''
-        self.save(self.custom_learner.source_net,name)
+        self.save(self.backend.source_net,name)
 
     def load_net(self,net):
         ''' load in a net from path or a variable'''
         if isinstance(net, str): # if it is a string, load the net from the path
             net = self.load(net)
-        self.custom_learner.set_net(net)
+        self.backend.set_net(net)
 
 
     def save_training_history(self, path='.'):
@@ -80,7 +80,7 @@ class DQNLearner(object):
         Note: different back-ends will return different param containers
         """
         # TODO: return a dictionary here?
-        self.custom_learner.params()
+        self.backend.params()
 
 
     def pre_process_reward(self, r):

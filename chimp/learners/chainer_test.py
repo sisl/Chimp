@@ -6,7 +6,7 @@ Right now we just overfit a simple control problem:
     - action 1 is optimal for all states
 """
 
-from chimp.learners.chainer_learner import ChainerLearner
+from chimp.learners.chainer_backend import ChainerBackend
 from chimp.learners.dqn_learner import DQNLearner
 from chimp.learners.dqn_learner import DQNPolicy
 
@@ -103,7 +103,7 @@ def make_batch(n_samples, o_dims, n_actions):
 
 
 net = TestNet()
-custom_learner = ChainerLearner(settings)
+custom_learner = ChainerBackend(settings)
 custom_learner.set_net(net)
 
 learner = DQNLearner(settings, custom_learner)
