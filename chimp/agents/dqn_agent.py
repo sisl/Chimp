@@ -5,7 +5,7 @@ import pickle
 from timeit import default_timer as timer
 
 from chimp.utils.policies import RandomPolicy
-from chimp.learners.dqn_learner import DQNPolicy
+from chimp.utils.policies import DQNPolicy
 
 class DQNAgent(object):
 

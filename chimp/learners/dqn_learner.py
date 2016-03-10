@@ -8,8 +8,6 @@ import numpy as np
 import pickle # used to save the nets
 from copy import deepcopy
 
-from chimp.utils.policies import DQNPolicy
-
 class DQNLearner(object):
 
     def __init__(self, settings, backend):
@@ -27,8 +25,6 @@ class DQNLearner(object):
         """
 
         self.backend = backend
-
-        self.dqn_policy = DQNPolicy(backend)
 
         self.clip_reward = settings.get('clip_reward', False)
         self.reward_rescale = settings.get('reward_rescale', False)
