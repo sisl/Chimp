@@ -105,8 +105,6 @@ class Linear(Chain):
         )
 
     def __call__(self, s, action_history):
-    def __call__(self, data):
-        (ohist, _, _) = data
         h = F.relu(self.l1(s,action_history))
         h = F.relu(self.l2(h))
         h = self.bn1(h)
