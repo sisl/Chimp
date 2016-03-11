@@ -1,7 +1,7 @@
 # Chimp
 
 Chimp is a general purpose framework for deep reinforcement learning developed at the [Stanford Intelligent Systems Laboratory](http://sisl.stanford.edu/).
-Chimp is based on a simple three-part architecture to allow plug-and-play like capabilities for deep reinforcement
+Chimp is based on a simple four-part architecture to allow plug-and-play like capabilities for deep reinforcement
 learning experiments. 
 This package was inspired by the Google DeepMind [paper](http://www.nature.com/nature/journal/v518/n7540/full/nature14236.html) (V. Mnih, et al). 
 Many of the architectural ideas were taken from DeepMind's
