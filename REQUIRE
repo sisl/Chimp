@@ -1,7 +1,0 @@
-julia 0.3
-POMDPs.jl
-Mocha.jl
-
-python 2.7+
-NumPy 1.9+
-Chainer 1.3.2
