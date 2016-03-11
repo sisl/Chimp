@@ -14,12 +14,12 @@ ToDo
 
 # Architecture 
 
-Chimp consists of four main modules: Agent, Learner, Simulator and Memory. Such decomposition leads to a very powerful and flexible framework for reinforcement learning experiments, where one can quickly switch between simulators, replay memory implementations, and various deep learning backends.
+Chimp consists of four main modules: Agent, Learner, Simulator, and Memory. Such decomposition leads to a very powerful and flexible framework for reinforcement learning experiments, where one can quickly switch between simulators, replay memory implementations, and various deep learning backends.
 
 Chimp is also powerful in its flexible handling of inputs to the deep neural network. 
-The user can specify the history lengths for observations, actions and even rewards that they want to use as inputs to the model, and Chimp will handle the rest. 
+The user can specify the history lengths for observations, actions, and even rewards that they want to use as inputs to the model and Chimp will handle the rest. 
 
-The specification of the input size is in the form of a tuple ```(s_size, a_size, r_size)```. For the DeepMind Atari experiments, this setting would look like (4,0,0), they used four image frames per input and no action or reward history. 
+The specification of the input size is in the form of a tuple ```(s_size, a_size, r_size)```. For the DeepMind Atari experiments, this setting would look like (4,0,0): they use four image frames per input and no action or reward history. 
 
 # Components
 
