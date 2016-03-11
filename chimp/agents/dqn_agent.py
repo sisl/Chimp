@@ -62,7 +62,7 @@ class DQNAgent(object):
         return pickle.load(open(name, "rb"))
 
 
-    def train(self, verbose=False):
+    def train(self, verbose=True):
         """
         Trains the network
         """
