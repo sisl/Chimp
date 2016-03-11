@@ -34,7 +34,7 @@ The specification of the input size is in the form of a tuple ```(s_size, a_size
 	* Single-player Arcade Learning Environment
 	* Tiger POMDP problem
 
-* Agent: the general framework that handles all interactions between a learner, a memory and a simulator.
+* Agent: the general framework that handles all interactions between a learner, a memory, and a simulator.
 
 # Dependencies
 
