@@ -23,30 +23,30 @@ The specification of the input size is in the form of a tuple ```(s_size, a_size
 
 # Components
 
-* Memory: script that implements experience replay
+* Memory (implements experience replay)
 	* Currently, we support in-memory numpy arrays and HDF5 allocated storage
 
-* Learner: the "brain" of the algorithm that does forward and backward passes in a neural net
+* Learner ("brain" of the algorithm that does forward and backward passes in a neural net)
 	* We support DQN with arbitrary observation/action/reward history as input
 	* Planning to add LSTM + actor-critic framework
 
-* Simulator: environment for the agent to interact with
+* Simulator (environment for the agent to interact with)
 	* Single-player Arcade Learning Environment
 	* Tiger POMDP problem
 
-* Agent: the general framework that handles all interactions between a learner, a memory, and a simulator.
+* Agent (general framework that handles all interactions between a learner, a memory, and a simulator)
 
 # Dependencies
 
 Chimp relies on existing deep learning back-ends. Currently only [Chainer](http://chainer.org/) is supported. Support
 for TensorFlow is on the way.
 
-The following Python packages are required to use PODRL.
+Required Python packages:
 * [Chainer](https://github.com/pfnet/chainer)
 * NumPy
 * SciPy
 
-The following libraries are recommended (some functionality will be absent without them):
+Recommended libraries (some functionality will be absent without them):
 * Pygame
 * CUDA
 * Arcade Learning Environment
