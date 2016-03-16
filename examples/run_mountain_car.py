@@ -12,21 +12,23 @@ import chainer.links as L
 from chainer import cuda, Function, gradient_check, Variable, optimizers, serializers, utils
 from chainer import Link, Chain, ChainList
 
-from memories import ReplayMemoryHDF5
+# Memory
+from chimp.memories import ReplayMemoryHDF5
 
-from learners import Learner
-from agents import DQNAgent
+# Learner (Brain)
+from chimp.learners.dqn_learner import DQNLearner
+from chimp.learners.chainer_backend import ChainerBackend
 
+# Agent Framework
+from chimp.agents import DQNAgent
 
-from simulators.mdp.MDPSimulator import MDPSimulator
-from simulators.mdp import MountainCar 
-from utils.Policies import RandomPolicy
+# Simulator
+from chimp.simulators.mdp.mdp_simulator import MDPSimulator
+from chimp.simulators.mdp.mountain_car import MountainCar 
 
+# Rollout Policy
+from chimp.utils.policies import RandomPolicy
 
-mdp = MountainCar()
-simulator = MDPSimulator(mdp)
-policy = RandomPolicy(simulator.n_actions)
-rtot = simulator.simulate(100, policy, verbose=True)
 
 settings = {
 
@@ -35,26 +37,26 @@ settings = {
     'print_every' : 1000,
     'save_dir' : 'results/mountain_car',
     'iterations' : 200000,
-    'eval_iterations' : 200,
+    'eval_iterations' : 100,
     'eval_every' : 1000,
-    'save_every' : 1000,
-    'initial_exploration' : 10000,
-    'epsilon_decay' : 0.00001, # subtract from epsilon every step
+    'save_every' : 20000,
+    'initial_exploration' : 50000,
+    'epsilon_decay' : 0.000001, # subtract from epsilon every step
     'eval_epsilon' : 0, # epsilon used in evaluation, 0 means no random actions
     'epsilon' : 1.0,  # Initial exploratoin rate
     'learn_freq' : 1,
-    'history_sizes' : (1, 1, 1), # sizes of histories to use as nn inputs (o, a, r)
+    'history_sizes' : (1, 0, 0), # sizes of histories to use as nn inputs (o, a, r)
+    'model_dims' : (1,2), 
 
     # simulator settings
     'viz' : False,
 
     # replay memory settings
-    'memory_size' : 10000,  # size of replay memory
+    'memory_size' : 100000,  # size of replay memory
     'n_frames' : 1,  # number of frames
 
     # learner settings
-    'learning_rate' : 0.00025, 
-    'learning_rate_decay' : 1.0,
+    'learning_rate' : 0.00001, 
     'decay_rate' : 0.99, # decay rate for RMSprop, otherwise not used
     'discount' : 0.95, # discount rate for RL
     'clip_err' : False, # value to clip loss gradients to
@@ -73,61 +75,50 @@ settings = {
 
     }
 
-print(settings)
-
-np.random.seed(settings["seed_general"])
-
-print('Setting up simulator...')
-
 mdp = MountainCar()
 simulator = MDPSimulator(mdp)
 
-settings['model_dims'] = simulator.model_dims
-
-print('Initializing replay memory...')
-memory = ReplayMemoryHDF5(settings)
-
-print('Setting up networks...')
-
-class Linear(Chain):
+class CarNet(Chain):
 
     def __init__(self):
-        super(Linear, self).__init__(
-            l1=F.Bilinear(simulator.model_dims[1] * settings["n_frames"], settings["n_frames"], 20),
-            l2=F.Linear(20, 10),
+        super(CarNet, self).__init__(
+            l1=F.Linear(settings['model_dims'][1], 20, bias=0.0),
+            l2=F.Linear(20, 10, bias=0.0),
             bn1=L.BatchNormalization(10),
             l3=F.Linear(10, 10),
-            l4=F.Linear(10, 20),
-            bn2=L.BatchNormalization(20),
-            l5=F.Linear(20, 10),
-            l6=F.Linear(10, 5),
-            l7=F.Linear(5, simulator.n_actions)
+            l4=F.Linear(10, 10),
+            bn2=L.BatchNormalization(10),
+            lout=F.Linear(10, simulator.n_actions)
         )
+        self.train = True
+        # initialize avg_var to prevent divide by zero
+        self.bn1.avg_var.fill(0.1),
+        self.bn2.avg_var.fill(0.1),
 
-    def __call__(self, s, action_history):
-        h = F.relu(self.l1(s,action_history))
+
+    def __call__(self, ohist, ahist):
+        h = F.relu(self.l1(ohist))
         h = F.relu(self.l2(h))
-        h = self.bn1(h)
+        h = self.bn1(h, test=not self.train)
         h = F.relu(self.l3(h))
         h = F.relu(self.l4(h))
-        h = self.bn2(h)
-        h = F.relu(self.l5(h))
-        h = F.relu(self.l6(h))
-        output = self.l7(h)
+        h = self.bn2(h, test=not self.train)
+        output = self.lout(h)
         return output
 
-net = Linear()
 
-print('Initializing the learner...')
-learner = Learner(settings)
-learner.load_net(net)
+net = CarNet()
 
-print('Initializing the agent framework...')
-agent = DQNAgent(settings)
+# Initialize Learner with a Chainer backend
+backend = ChainerBackend(settings)
+backend.set_net(net)
+learner = DQNLearner(settings, backend)
 
-print('Training...')
-agent.train(learner, memory, simulator)
+# Initialize memory
+memory = ReplayMemoryHDF5(settings)
 
-print('Loading the net...')
-learner = agent.load(settings['save_dir']+'/learner_final.p')
+# Initialize Agent Framework
+agent = DQNAgent(learner, memory, simulator, settings)
 
+# Start training
+agent.train(verbose=True)

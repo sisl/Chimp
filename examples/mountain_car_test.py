@@ -6,16 +6,12 @@ Right now we just overfit a simple control problem:
     - action 1 is optimal for all states
 """
 
-from chimp.learners.chainer_learner import ChainerLearner
+from chimp.learners.chainer_backend import ChainerBackend
 from chimp.learners.dqn_learner import DQNLearner
-from chimp.learners.dqn_learner import DQNPolicy
-
-from chimp.agents.dqn_agent import DQNAgent
+from chimp.utils.policies import DQNPolicy
 
 from chimp.simulators.mdp.mountain_car import MountainCar
 from chimp.simulators.mdp.mdp_simulator import MDPSimulator
-
-from chimp.memories.replay_memory import ReplayMemoryHDF5
 
 import numpy as np
 import pickle
@@ -71,11 +67,6 @@ settings = {
 
     }
 
-
-mdp = MountainCar()
-simulator = MDPSimulator(mdp)
-
-
 class TestNet(Chain):
 
     def __init__(self):
@@ -104,15 +95,41 @@ class TestNet(Chain):
         return output
 
 
+def car_sim(nsteps, simulator, policy, verbose=False):
+    mdp = simulator.model
 
-net = pickle.load(open("pre_trained_nets/mountain_car.net", "rb")) 
-custom_learner = ChainerLearner(settings)
-custom_learner.set_net(net)
-learner = DQNLearner(settings, custom_learner)
+    # re-initialize the model
+    simulator.reset_episode()
+
+    rtot = 0.0
+    xpos = np.zeros(nsteps)
+    vel = np.zeros(nsteps)
+    # run the simulation
+    input_state = np.zeros((1,2), dtype=np.float32)
+    for i in xrange(nsteps):
+        state = simulator.get_screenshot()
+        input_state[0] = state
+        a = policy.action((input_state,None))
+        simulator.act(a)
+        r = simulator.reward()
+        rtot += r
+        xpos[i], vel[i] = state
+        if simulator.episode_over():
+            break
+    return rtot, xpos, vel
+
+
+mdp = MountainCar()
+simulator = MDPSimulator(mdp)
+
+net = pickle.load(open("../chimp/pre_trained_nets/mountain_car.net", "rb")) 
+backend = ChainerBackend(settings)
+backend.set_net(net)
+learner = DQNLearner(settings, backend)
 
 policy = DQNPolicy(learner)
 
-r, xtrace, vtrace = simulator.simulate(300, policy, verbose=True)
+r, xtrace, vtrace = car_sim(300, simulator, policy, verbose=True)
 
 p.plot(xtrace); p.plot(10.0*vtrace)
 p.show()
