@@ -199,13 +199,13 @@ class ChainerBackend(object):
     
     def set_params(self, params):
 
-        self.gpu = params['gpu']
-        self.learning_rate = params['learning_rate']
-        self.decay_rate = params['decay_rate']
-        self.discount = params['discount']
-        self.clip_err = params['clip_err']
-        self.target_net_update = params['target_net_update']
-        self.double_DQN = params['double_DQN']
+        self.gpu = params.get('gpu',False)
+        self.learning_rate = params.get('learning_rate',0.00025)
+        self.decay_rate = params.get('decay_rate',0.95)
+        self.discount = params.get('discount',0.95)
+        self.clip_err = params.get('clip_err',False)
+        self.target_net_update = params.get('target_net_update',10000)
+        self.double_DQN = params.get('double_DQN',False)
 
         # setting up various possible gradient update algorithms
         if params['optim_name'] == 'RMSprop':

@@ -103,7 +103,7 @@ class AtariSimulator(object):
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                exit()
+                exit
 
         if self.viz_cropped:
             self.surface = pygame.surfarray.make_surface(self.frame) # has already been transposed

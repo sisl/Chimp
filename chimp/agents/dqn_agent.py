@@ -38,9 +38,12 @@ class DQNAgent(object):
         self.set_params(settings)
 
         self.n_epochs = self.iterations / float(memory.memory_size)
-        self.loss = np.zeros(self.iterations)
-        self.q_ave = np.zeros(self.iterations)
-        self.r_eval = [] 
+        self.iteration = []
+        self.loss = []
+        self.q_ave = []
+        self.eval_iteration = []
+        self.r_eval = []
+        self.r_per_episode_eval = [] 
 
     def policy(self, obs, epsilon):
         """
@@ -88,11 +91,13 @@ class DQNAgent(object):
         while iteration < self.iterations: # for the set number of iterations
 
             # perform a single simulator step
-            self.step()
-            # minibatch update for DQN
-            loss, qvals = self.batch_update()
-            self.loss[iteration] = loss
-            self.q_ave[iteration] = np.mean(qvals)
+            if iteration % self.learn_freq == 0:
+                self.step()
+                # minibatch update for DQN
+                loss, qvals = self.batch_update()
+                self.iteration.append(iteration)
+                self.loss.append(loss)
+                self.q_ave.append(np.mean(qvals))
 
             if iteration % self.print_every == 0 and verbose:
                 print "Iteration: ",  iteration, ", Loss: ", loss, " Q-Values: ", np.mean(qvals,0), ", Time since print: ", timer() - last_print, ", Total runtime: ", timer() - start_time, ", epsilon: ", self.epsilon
@@ -101,13 +106,18 @@ class DQNAgent(object):
             if iteration % self.save_every == 0:
                 # saving the net, the training history, and the learner itself
                 learner.save_net('%s/net_%d.p' % (self.save_dir,int(iteration)))
-                self.save(learner,'%s/learner_final.p' % self.save_dir)
+                np.savetxt('%s/training_history.csv' % self.save_dir, np.asarray([self.iteration, self.loss, self.q_ave]).T)
 
             if iteration % self.eval_every == 0: # evaluation
-                sim_r, sim_time = self.simulate(self.eval_iterations, self.eval_epsilon)
+                sim_r, sim_r_per_episode, sim_time = self.simulate(self.eval_iterations, self.eval_epsilon)
+                self.eval_iteration.append(iteration)
                 self.r_eval.append(sim_r)
+                self.r_per_episode_eval.append(sim_r_per_episode)
+
                 if verbose:
-                    print "Evaluation, total reward: ", sim_r, ", Total runtime: ", sim_time
+                    print "Evaluation, total reward: ", sim_r, ", Reward per episode: ", sim_r_per_episode, ", Total runtime: ", sim_time
+
+                np.savetxt('%s/evaluation_history.csv' % self.save_dir, np.asarray([self.eval_iteration, self.r_eval, self.r_per_episode_eval]).T)
 
             if iteration % self.target_net_update == 0:
                 learner.copy_net_to_target_net()
@@ -119,9 +129,11 @@ class DQNAgent(object):
 
         memory.close()
 
+        learner.save_net('%s/net_final_%d.p' % (self.save_dir,int(iteration)))
+        np.savetxt('%s/training_history.csv' % self.save_dir, np.asarray([self.iteration, self.loss, self.q_ave]).T)
+
         run_time = timer() - start_time
         print('Overall training + evaluation time: '+ str(run_time))
-        self.save(learner,'%s/learner_final.p' % self.save_dir)
 
 
 
@@ -198,6 +210,8 @@ class DQNAgent(object):
             simulator.init_viz_display()
 
         rtot = 0.0
+        r_per_episode = 0.0
+        episode_count = 0
         start_sim = timer()
         for i in xrange(nsteps):
             # generate reward and step the simulator
@@ -208,6 +222,8 @@ class DQNAgent(object):
                 iobs = simulator.get_screenshot().copy()
                 self.empty_eval_history()
                 self.initial_eval_obs(iobs)
+                r_per_episode = rtot
+                episode_count += 1
             else:
                 simulator.act(a)
                 obsp = simulator.get_screenshot().copy()
@@ -220,8 +236,12 @@ class DQNAgent(object):
             if self.viz: # move the image to the screen / shut down the game if display is closed
                 simulator.refresh_viz_display()
 
+        if episode_count > 0:
+            r_per_episode /= episode_count
+        else:
+            r_per_episode = rtot
         runtime = timer() - start_sim
-        return rtot, runtime
+        return rtot, r_per_episode, runtime
 
 
     def populate_memory(self, nsamples):
@@ -276,7 +296,6 @@ class DQNAgent(object):
         self.n_frames = settings.get('n_frames', 1)
         self.iterations = settings.get('iterations', 1000000)
 
-        # 
         self.epsilon = settings.get('epsilon', 1.0) # exploration
         self.epsilon_decay = settings.get('epsilon_decay', 0.00001) # decay in 
         self.eval_epsilon = settings.get('eval_epsilon', 0.0) # exploration during evaluation
@@ -289,8 +308,8 @@ class DQNAgent(object):
         self.print_every = settings.get('print_every', 5000)
         self.save_dir = settings.get('save_dir', '.')
         self.save_every = settings.get('save_every', 5000)
-        # TODO: what is this param?
-        self.learn_freq = settings.get('learn_freq', 1) 
+        
+        self.learn_freq = settings.get('learn_freq', 1) # how frequently to do back prop on a minibatch
         self.target_net_update = settings.get('target_net_update', 5000)
 
         self.ohist_size, self.ahist_size, self.rhist_size = settings.get('history_sizes', (1,0,0))

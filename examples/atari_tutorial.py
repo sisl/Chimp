@@ -18,6 +18,7 @@ from chimp.agents import DQNAgent
 # Request necessary packages
 
 import numpy as np
+import random
 
 import chainer
 import chainer.functions as F
@@ -31,14 +32,14 @@ settings = {
 
     # agent settings
     'batch_size' : 32,
-    'print_every' : 10000,
+    'print_every' : 1000,
     'save_dir' : './results_atari',
-    'iterations' : 1000000,
+    'iterations' : 10000,
     'eval_iterations' : 5000,
     'eval_every' : 50000,
     'save_every' : 50000,
-    'initial_exploration' : 10000,
-    'epsilon_decay' : 0.00001, # subtract from epsilon every step
+    'initial_exploration' : 50000,
+    'epsilon_decay' : 0.000005, # subtract from epsilon every step
     'eval_epsilon' : 0.05, # epsilon used in evaluation, 0 means no random actions
     'epsilon' : 1.0,  # Initial exploratoin rate
     'learn_freq' : 4,
@@ -52,7 +53,7 @@ settings = {
     'action_history' : True,
 
     # simulator settings
-    'viz' : False,
+    'viz' : True,
     'viz_cropped' : False,
 
     # replay memory settings
@@ -61,14 +62,13 @@ settings = {
 
     # learner settings
     'learning_rate' : 0.00025, 
-    'decay_rate' : 0.99, # decay rate for RMSprop, otherwise not used
-    'discount' : 0.95, # discount rate for RL
+    'decay_rate' : 0.95, # decay rate for RMSprop, otherwise not used
+    'discount' : 0.99, # discount rate for RL
     'clip_err' : False, # value to clip loss gradients to
     'clip_reward' : 1, # value to clip reward values to
-    'target_net_update' : 1000, # update the update-generating target net every fixed number of iterations
-    'double_DQN' : False, # use Double DQN (based on Deep Mind paper)
+    'target_net_update' : 10000, # update the update-generating target net every fixed number of iterations
     'optim_name' : 'RMSprop', # currently supports "RMSprop", "ADADELTA", "ADAM" and "SGD"'
-    'gpu' : False,
+    'gpu' : True,
     'reward_rescale': False,
 
     # general
@@ -83,12 +83,10 @@ settings = {
 # Initialize random seed 
 
 np.random.seed(settings["seed_general"])
+random.seed(settings["seed_general"])
 
 # Initialize Atari simulator
 simulator = AtariSimulator(settings)
-
-o_dims = settings['model_dims']
-n_samples = settings['batch_size']
 
 # Initialize a deep net structure
 
@@ -136,5 +134,47 @@ agent = DQNAgent(learner, memory, simulator, settings)
 
 # Start training
 
-agent.train(verbose=True)
+agent.train()
 
+
+# load net
+
+# agent.learner.load_net(settings['save_dir']+'/net_750000.p')
+
+# '''Plot training history'''
+
+# plt.plot(range(len(learner.val_rewards)), learner.val_rewards)
+# plt.xlabel("Evaluation episode (1000 transitions long, every 5000 training iter.)")
+# plt.ylabel("Accumulated reward per episode")
+# plt.xlim(0, 100)
+# plt.ylim(-200, 200)
+# plt.grid(True)
+# plt.savefig(settings['save_dir'] + '_' + "evaluation_reward.svg", bbox_inches='tight')
+# plt.close()
+
+# plt.plot(range(len(learner.val_qval_avgs)), learner.val_qval_avgs)
+# plt.xlabel("Evaluation episode  (1000 transitions long, every 5000 training iter.)")
+# plt.ylabel("Average Q-value")
+# plt.xlim(0, 100)
+# plt.ylim(0, 20)
+# plt.grid(True)
+# plt.savefig(settings['save_dir'] + '_' + "evaluation_q_value.svg", bbox_inches='tight')
+# plt.close()
+
+# '''Plot value surface for beliefs'''
+# ind_max = learner.val_rewards[0::5].index(max(learner.val_rewards[0::5]))
+# ind_net = settings['save_every'] + ind_max * settings['save_every']
+# learner.load_net(settings['save_dir']+'/net_%d.p' % int(ind_net))
+
+# print(ind_net)
+# print(ind_max*5)
+# print(learner.val_rewards)
+# print(learner.val_rewards[ind_max*5])
+
+# '''Evaluate learned policy against the optimal heuristic policy'''
+# np.random.seed(settings["seed_general"])
+
+# print('Evaluating DQN agent...')
+# print('(reward, MSE loss, mean Q-value, episodes - NA, time)')
+# reward, MSE_loss, mean_Q_value, episodes, time, paths, actions, rewards = agent.evaluate(learner, simulator, 50000)
+# print(reward, MSE_loss, mean_Q_value, episodes, time)
