@@ -26,6 +26,10 @@ You will also need numpy and scipy installed, as well as a deep learning backend
 
 Once you have the dependencies installed you should be able to run the framework using a CPU. To use the GPU, you will need CUDA and a supported graphcis card. 
 
+# Getting Started
+
+If you are interested in using it for your own reinforcement learning problems check out [this mountain car tutorial](https://github.com/sisl/Chimp/blob/master/examples/mountain_car.ipynb) to get an idea of how to write your own simulator class. If you would like to use Chimp with the Atari Learning Environemnt check out the atari_tutorial.py file to get started. 
+
 # Architecture 
 
 Chimp consists of four main modules: Agent, Learner, Simulator, and Memory. Such decomposition leads to a very powerful and flexible framework for reinforcement learning experiments, where one can quickly switch between simulators, replay memory implementations, and various deep learning backends.
