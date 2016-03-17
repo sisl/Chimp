@@ -208,17 +208,18 @@ class ChainerBackend(object):
         self.double_DQN = params.get('double_DQN',False)
 
         # setting up various possible gradient update algorithms
-        if params['optim_name'] == 'RMSprop':
+        opt = params.get('optim_name', 'ADAM')
+        if opt == 'RMSprop':
             self.optimizer = optimizers.RMSprop(lr=self.learning_rate, alpha=self.decay_rate)
 
-        elif params['optim_name'] == 'ADADELTA':
+        elif opt == 'ADADELTA':
             print("Supplied learning rate not used with ADADELTA gradient update method")
             self.optimizer = optimizers.AdaDelta()
 
-        elif params['optim_name'] == 'ADAM':
+        elif opt == 'ADAM':
             self.optimizer = optimizers.Adam(alpha=self.learning_rate)
 
-        elif params['optim_name'] == 'SGD':
+        elif opt == 'SGD':
             self.optimizer = optimizers.SGD(lr=self.learning_rate)
 
         else:

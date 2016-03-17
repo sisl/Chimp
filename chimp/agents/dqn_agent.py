@@ -91,16 +91,16 @@ class DQNAgent(object):
         while iteration < self.iterations: # for the set number of iterations
 
             # perform a single simulator step
+            self.step()
+            # minibatch update for DQN
             if iteration % self.learn_freq == 0:
-                self.step()
-                # minibatch update for DQN
                 loss, qvals = self.batch_update()
                 self.iteration.append(iteration)
                 self.loss.append(loss)
                 self.q_ave.append(np.mean(qvals))
 
             if iteration % self.print_every == 0 and verbose:
-                print "Iteration: ",  iteration, ", Loss: ", loss, " Q-Values: ", np.mean(qvals,0), ", Time since print: ", timer() - last_print, ", Total runtime: ", timer() - start_time, ", epsilon: ", self.epsilon
+                print "Iteration: %d, Loss: %.2f, Average Q-Values: %.2f, Time since print: %.2f, Total runtime: %.2f, epsilon: %.2f" % (iteration, loss, np.mean(qvals), timer() - last_print, timer() - start_time, self.epsilon)
                 last_print = timer()
             
             if iteration % self.save_every == 0:
@@ -115,7 +115,7 @@ class DQNAgent(object):
                 self.r_per_episode_eval.append(sim_r_per_episode)
 
                 if verbose:
-                    print "Evaluation, total reward: ", sim_r, ", Reward per episode: ", sim_r_per_episode, ", Total runtime: ", sim_time
+                    print "Evaluation, total reward: %.2f, Reward per episode: %.2f" % (sim_r, sim_r_per_episode)
 
                 np.savetxt('%s/evaluation_history.csv' % self.save_dir, np.asarray([self.eval_iteration, self.r_eval, self.r_per_episode_eval]).T)
 
@@ -271,7 +271,7 @@ class DQNAgent(object):
             from matplotlib import pyplot
         except ImportError:
             "Can not plot loss, matplotlib required"
-        pyplot.plot(self.loss)
+        pyplot.plot(self.loss[1:])
         pyplot.xlabel("Iteration")
         pyplot.ylabel("Loss")
         pyplot.show()
