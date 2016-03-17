@@ -32,9 +32,9 @@ settings = {
 
     # agent settings
     'batch_size' : 32,
-    'print_every' : 1000,
+    'print_every' : 5000,
     'save_dir' : './results_atari',
-    'iterations' : 10000,
+    'iterations' : 5000000,
     'eval_iterations' : 5000,
     'eval_every' : 50000,
     'save_every' : 50000,
@@ -53,7 +53,7 @@ settings = {
     'action_history' : True,
 
     # simulator settings
-    'viz' : True,
+    'viz' : False,
     'viz_cropped' : False,
 
     # replay memory settings
