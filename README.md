@@ -5,8 +5,8 @@ Chimp is based on a simple four-part architecture to allow plug-and-play like ca
 learning experiments. 
 This package was inspired by the Google DeepMind [paper](http://www.nature.com/nature/journal/v518/n7540/full/nature14236.html) (V. Mnih, et al). 
 Many of the architectural ideas were taken from DeepMind's
-[GORILA](http://www.humphreysheil.com/blog/gorila-google-reinforcement-learning-architecture) framework and from the
-[paper](http://arxiv.org/pdf/1508.04186.pdf) on distributed Deep Q-Learning by Ong, et al. 
+[GORILA](http://arxiv.org/abs/1507.04296) framework and from the
+[paper](http://arxiv.org/abs/1508.04186) on distributed Deep Q-Learning by Ong, et al. 
 
 # Installation
 
