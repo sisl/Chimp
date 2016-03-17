@@ -28,7 +28,7 @@ Once you have the dependencies installed you should be able to run the framework
 
 # Getting Started
 
-If you are interested in using it for your own reinforcement learning problems check out [this mountain car tutorial](https://github.com/sisl/Chimp/blob/master/examples/mountain_car.ipynb) to get an idea of how to write your own simulator class. If you would like to use Chimp with the Atari Learning Environemnt check out the atari_tutorial.py file to get started. 
+If you are interested in using it for your own reinforcement learning problems check out the [mountain car tutorial](https://github.com/sisl/Chimp/blob/master/examples/mountain_car.ipynb) to get an idea of how to write your own simulator class. If you would like to use Chimp with the Atari Learning Environemnt check out the [Atari tutorial](https://github.com/sisl/Chimp/blob/master/examples/atari_tutorial.ipynb) to get started. 
 
 # Architecture 
 
