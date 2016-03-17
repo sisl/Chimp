@@ -16,7 +16,6 @@ class MDPSimulator():
 
         # initalize 
         self.current_state = model.initial_state()
-        self.next_state = model.initial_state()
         self.last_action = 0
         self.current_reward = 0.0
 
@@ -29,7 +28,6 @@ class MDPSimulator():
         Transitions the model forward by moving
         """
         mdp = self.model
-        np.copyto(self.current_state, self.next_state)
 
         self.current_reward = mdp.reward(self.current_state, action)
         self.next_state = mdp.transition(self.current_state, action)
@@ -45,14 +43,11 @@ class MDPSimulator():
 
     def reset_episode(self):
         self.current_state = self.model.initial_state()
-        self.next_state = self.model.initial_state()
-        # TODO: what's the best way to get the initial reward?
-        self.current_reward = self.model.reward(self.current_state, 0) 
+        self.current_reward = 0.0
 
     def n_actions(self):
         return self.model.n_actions
          
-
     def simulate(self, nsteps, policy, verbose=False):
         mdp = self.model
 

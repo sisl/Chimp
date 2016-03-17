@@ -21,8 +21,6 @@ class MountainCar():
         self.term_r = term_r
         self.nonterm_r = nonterm_r
 
-        self.current_state = np.zeros(2, dtype=np.float32)
-
         self.vmin, self.vmax = (-0.07, 0.07)
         self.xmin, self.xmax = (-1.2, 0.6)
 
@@ -34,23 +32,16 @@ class MountainCar():
         self.discrete_x = np.linspace(self.xmin, self.xmax, self.xgrid)
         self.discrete_v = np.linspace(self.vmin, self.vmax, self.vgrid)
 
-        self.sp_discrete = np.zeros(2, dtype=np.float32) 
-        
 
     def transition(self, s, a):
         """
         Returns a next state, given a state and an action
         """
-        sp = self.current_state
+        sp = np.zeros(2, dtype=np.float32)
         #sp = np.zeros(2, dtype=np.float32)
         sp[1] = s[1] + 0.001 * self.actions[a] - 0.0025 * np.cos(3 * s[0])
         sp[1] = self.vclip(sp[1])
         sp[0] = self.xclip(s[0] + sp[1])
-
-        if self.discrete:
-            self.sp_discrete[0] = self.find_nearest(self.discrete_x, sp[0])
-            self.sp_discrete[1] = self.find_nearest(self.discrete_v, sp[1])
-            return self.sp_discrete
 
         return sp
 
@@ -76,6 +67,7 @@ class MountainCar():
         xi = np.random.uniform(self.xmin, self.xmax*0.9)
         vi = 0.0
         return np.array([xi, vi], dtype=np.float32)
+
 
 
     #################################################################  
