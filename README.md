@@ -10,7 +10,21 @@ Many of the architectural ideas were taken from DeepMind's
 
 # Installation
 
-ToDo
+First clone Chimp:
+```
+git clone https://github.com/sisl/Chimp
+```
+
+To install Chimp run setup.py:
+```
+python setup.py
+```
+
+This will create a symbolic link to the chimp source directory in the folder where your numpy installation lives. If you don't want to add the symbolic link, you can add the chimp source directory to the PYTHON_PATH environmnet variable. 
+
+You will also need numpy and scipy installed, as well as a deep learning backend. Currently only [Chainer](https://github.com/pfnet/chainer) is supported (TensorFlow coming soon). 
+
+Once you have the dependencies installed you should be able to run the framework using a CPU. To use the GPU, you will need CUDA and a supported graphcis card. 
 
 # Architecture 
 
