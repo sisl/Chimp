@@ -45,12 +45,12 @@ The specification of the input size is in the form of a tuple ```(s_size, a_size
 	* Currently, we support in-memory numpy arrays and HDF5 allocated storage
 
 * Learner ("brain" of the algorithm that does forward and backward passes in a neural net)
-	* We support DQN with arbitrary observation/action/reward history as input
+	* We support DQN with arbitrary observation/action history lengths as input
 	* Planning to add LSTM + actor-critic framework
 
 * Simulator (environment for the agent to interact with)
 	* Single-player Arcade Learning Environment
-	* Tiger POMDP problem
+	* MDPs
 
 * Agent (general framework that handles all interactions between a learner, a memory, and a simulator)
 
