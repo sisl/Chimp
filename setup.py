@@ -3,7 +3,7 @@ import subprocess
 import numpy
 
 """
-This script creates a symbolic link to the chimp source code in your pytohn's site-packages directory
+This script creates a symbolic link to the chimp source code in your python's site-packages directory
 """
 
 np_path = numpy.__file__
