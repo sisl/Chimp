@@ -77,7 +77,7 @@ class DQNLearner(object):
         """
         # TODO: return a dictionary here?
         self.backend.params()
-
+        
 
     def pre_process_reward(self, r):
         """

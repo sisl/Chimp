@@ -211,4 +211,8 @@ class ReplayMemoryHDF5(object):
         self.fp.close()
 
     def __del__(self):
-        self.close()
+        try:
+            self.close()
+        except:
+            pass # already closed
+        
