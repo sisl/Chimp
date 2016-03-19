@@ -1,5 +1,6 @@
 <img src="https://github.com/sisl/Chimp/blob/master/logos/monkey_text.png" width="300">
 
+<br><br>
 
 Chimp is a general purpose framework for deep reinforcement learning developed at the [Stanford Intelligent Systems Laboratory](http://sisl.stanford.edu/).
 Chimp is based on a simple four-part architecture to allow plug-and-play like capabilities for deep reinforcement
