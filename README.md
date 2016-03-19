@@ -1,4 +1,4 @@
-![](https://github.com/sisl/Chimp/blob/master/logos/chimp.png =250x)
+![](https://github.com/sisl/Chimp/blob/master/logos/chimp.png "Chimp logo")
 
 # Chimp
 
