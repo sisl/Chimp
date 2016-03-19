@@ -1,4 +1,4 @@
-![](https://github.com/sisl/Chimp/blob/master/logos/chimp.png "Chimp logo" =100x100)
+<img src="https://github.com/sisl/Chimp/blob/master/logos/chimp.png" width="100">
 
 # Chimp
 
