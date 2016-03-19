@@ -1,4 +1,4 @@
-<img src="https://github.com/sisl/Chimp/blob/master/logos/chimp.png" width="100">
+<img src="https://github.com/sisl/Chimp/blob/master/logos/monkey_text.png" width="250">
 
 # Chimp
 
