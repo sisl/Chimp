@@ -8,7 +8,7 @@ learning experiments.
 This package was inspired by the Google DeepMind [paper](http://www.nature.com/nature/journal/v518/n7540/full/nature14236.html) (V. Mnih, et al). 
 Many of the architectural ideas were taken from DeepMind's
 [GORILA](http://arxiv.org/abs/1507.04296) framework and from the
-[paper](http://arxiv.org/abs/1508.04186) on distributed Deep Q-Learning by Ong, et al. 
+[paper](http://arxiv.org/abs/1508.04186) on distributed Deep Q-Learning by Ong, et al.
 
 # Installation
 
@@ -58,8 +58,7 @@ The specification of the input size is in the form of a tuple ```(s_size, a_size
 
 # Dependencies
 
-Chimp relies on existing deep learning back-ends. Currently only [Chainer](http://chainer.org/) is supported. Support
-for TensorFlow is on the way.
+Chimp relies on existing deep learning back-ends. Currently only [Chainer](http://chainer.org/) is supported.
 
 Required Python packages:
 * [Chainer](https://github.com/pfnet/chainer)
