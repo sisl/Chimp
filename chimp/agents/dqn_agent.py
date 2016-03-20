@@ -129,7 +129,7 @@ class DQNAgent(object):
 
         memory.close()
 
-        learner.save_net('%s/net_final_%d.p' % (self.save_dir,int(iteration)))
+        learner.save_net('%s/net_%d.p' % (self.save_dir,int(iteration)))
         np.savetxt('%s/training_history.csv' % self.save_dir, np.asarray([self.iteration, self.loss, self.q_ave]).T)
 
         run_time = timer() - start_time
