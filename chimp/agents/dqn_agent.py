@@ -225,6 +225,8 @@ class DQNAgent(object):
                 iobs = simulator.get_screenshot().copy()
                 self.empty_eval_history()
                 self.initial_eval_obs(iobs)
+                episode_count += 1
+                r_per_episode = rtot
             else:
                 obsp = simulator.get_screenshot().copy()
                 self.update_eval_history(obsp, a)
@@ -232,8 +234,8 @@ class DQNAgent(object):
             if self.viz: # move the image to the screen / shut down the game if display is closed
                 simulator.refresh_viz_display()
 
+        print r_per_episode, episode_count
         if episode_count > 0:
-            print r_per_episode, episode_count
             r_per_episode /= episode_count
         else:
             r_per_episode = rtot
