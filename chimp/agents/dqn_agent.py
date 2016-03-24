@@ -100,7 +100,7 @@ class DQNAgent(object):
                 self.q_ave.append(np.mean(qvals))
 
             if iteration % self.print_every == 0 and verbose:
-                print "Iteration: %d, Loss: %.2f, Average Q-Values: %.2f, Time since print: %.2f, Total runtime: %.2f, epsilon: %.2f" % (iteration, loss, np.mean(qvals), timer() - last_print, timer() - start_time, self.epsilon)
+                print "Iteration: %d, Loss: %.3f, Average Q-Values: %.2f, Time since print: %.2f, Total runtime: %.2f, epsilon: %.2f" % (iteration, loss, np.mean(qvals), timer() - last_print, timer() - start_time, self.epsilon)
                 last_print = timer()
             
             if iteration % self.save_every == 0:
@@ -217,7 +217,9 @@ class DQNAgent(object):
             # generate reward and step the simulator
             ohist, ahist = self.eval_ohist, self.eval_ahist
             a = self.policy((ohist, ahist), epsilon)
+            r = 0.0
             if simulator.episode_over():
+                r = simulator.reward()
                 simulator.reset_episode()
                 iobs = simulator.get_screenshot().copy()
                 self.empty_eval_history()
@@ -228,8 +230,7 @@ class DQNAgent(object):
                 simulator.act(a)
                 obsp = simulator.get_screenshot().copy()
                 self.update_eval_history(obsp, a)
-
-            r = simulator.reward()
+                r = simulator.reward()
 
             rtot += r # make this discounted?
 
