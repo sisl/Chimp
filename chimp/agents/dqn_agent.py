@@ -147,6 +147,8 @@ class DQNAgent(object):
 
         obs = simulator.get_screenshot().copy()
         a = self.policy((self.ohist, self.ahist), self.epsilon)
+        simulator.act(a)
+        r = simulator.reward()
 
         term = False
         obsp = None
@@ -158,11 +160,8 @@ class DQNAgent(object):
             self.empty_history()
             self.initial_obs(iobs)
         else:
-            simulator.act(a)
             obsp = simulator.get_screenshot().copy()
             self.update_history(obsp, a)
-
-        r = simulator.reward()
 
         if self.viz: # move the image to the screen / shut down the game if display is closed
             simulator.refresh_viz_display()
@@ -217,27 +216,24 @@ class DQNAgent(object):
             # generate reward and step the simulator
             ohist, ahist = self.eval_ohist, self.eval_ahist
             a = self.policy((ohist, ahist), epsilon)
-            r = 0.0
+
+            simulator.act(a)
+            r = simulator.reward()
+            rtot += r
             if simulator.episode_over():
-                r = simulator.reward()
                 simulator.reset_episode()
                 iobs = simulator.get_screenshot().copy()
                 self.empty_eval_history()
                 self.initial_eval_obs(iobs)
-                r_per_episode = rtot
-                episode_count += 1
             else:
-                simulator.act(a)
                 obsp = simulator.get_screenshot().copy()
                 self.update_eval_history(obsp, a)
-                r = simulator.reward()
-
-            rtot += r # make this discounted?
-
+ 
             if self.viz: # move the image to the screen / shut down the game if display is closed
                 simulator.refresh_viz_display()
 
         if episode_count > 0:
+            print r_per_episode, episode_count
             r_per_episode /= episode_count
         else:
             r_per_episode = rtot

@@ -38,12 +38,12 @@ settings = {
     'batch_size' : 32,
     'print_every' : 1000,
     'save_dir' : 'results',
-    'iterations' : 2000000,
-    'eval_iterations' : 100,
+    'iterations' : 500000,
+    'eval_iterations' : 200,
     'eval_every' : 1000,
     'save_every' : 20000,
-    'initial_exploration' : 50000,
-    'epsilon_decay' : 0.000001, # subtract from epsilon every step
+    'initial_exploration' : 10000,
+    'epsilon_decay' : 0.000005, # subtract from epsilon every step
     'eval_epsilon' : 0, # epsilon used in evaluation, 0 means no random actions
     'epsilon' : 1.0,  # Initial exploratoin rate
     'learn_freq' : 1,
@@ -54,13 +54,13 @@ settings = {
     'viz' : False,
 
     # replay memory settings
-    'memory_size' : 100000,  # size of replay memory
+    'memory_size' : 10000,  # size of replay memory
     'n_frames' : 1,  # number of frames
 
     # learner settings
     'learning_rate' : 0.00001,
-    'decay_rate' : 0.99, # decay rate for RMSprop, otherwise not used
-    'discount' : 0.95, # discount rate for RL
+    'decay_rate' : 0.95, # decay rate for RMSprop, otherwise not used
+    'discount' : 0.99, # discount rate for RL
     'clip_err' : False, # value to clip loss gradients to
     'clip_reward' : False, # value to clip reward values to
     'target_net_update' : 2000, # update the update-generating target net every fixed number of iterations
