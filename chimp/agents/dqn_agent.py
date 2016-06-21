@@ -234,7 +234,6 @@ class DQNAgent(object):
             if self.viz: # move the image to the screen / shut down the game if display is closed
                 simulator.refresh_viz_display()
 
-        print r_per_episode, episode_count
         if episode_count > 0:
             r_per_episode /= episode_count
         else:
@@ -275,14 +274,26 @@ class DQNAgent(object):
         pyplot.ylabel("Loss")
         pyplot.show()
 
-    def plot_eval_reward(self):
+    def plot_per_sim_reward(self):
+        try:
+            from matplotlib import pyplot
+        except ImportError:
+            "Can not plot reward, matplotlib required"
+        pyplot.plot(self.eval_every * np.arange(len(self.r_eval)), self.r_eval)
+        pyplot.xlabel("Iteration")
+        pyplot.ylabel("Reward")
+        pyplot.title("Total Reward Per Evaluation")
+        pyplot.show()
+
+    def plot_per_episode_reward(self):
         try:
             from matplotlib import pyplot
         except ImportError:
             "Can not plot loss, matplotlib required"
-        pyplot.plot(self.eval_every * np.arange(len(self.r_eval)), self.r_eval)
+        pyplot.plot(self.eval_every * np.arange(len(self.r_eval)), self.r_per_episode_eval)
         pyplot.xlabel("Reward")
         pyplot.ylabel("Loss")
+        pyplot.title("Average Reward Per Episode")
         pyplot.show()
 
 
@@ -305,8 +316,11 @@ class DQNAgent(object):
         self.eval_iterations = settings.get('eval_iterations', 500)
         self.eval_every = settings.get('eval_every', 5000)
         self.print_every = settings.get('print_every', 5000)
-        self.save_dir = settings.get('save_dir', '.')
         self.save_every = settings.get('save_every', 5000)
+        self.save_dir = settings.get('save_dir', '.')
+        # create the directory if it doesnt exist
+        if not os.path.isdir(self.save_dir):
+            os.makedirs(self.save_dir)
         
         self.learn_freq = settings.get('learn_freq', 1) # how frequently to do back prop on a minibatch
         self.target_net_update = settings.get('target_net_update', 5000)

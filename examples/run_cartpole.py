@@ -37,11 +37,11 @@ settings = {
     # agent settings
     'batch_size' : 32,
     'print_every' : 1000,
-    'save_dir' : 'results',
-    'iterations' : 500000,
+    'save_dir' : 'results/cartpole-1',
+    'iterations' : 10000,
     'eval_iterations' : 200,
     'eval_every' : 1000,
-    'save_every' : 20000,
+    'save_every' : 1000,
     'initial_exploration' : 10000,
     'epsilon_decay' : 0.000005, # subtract from epsilon every step
     'eval_epsilon' : 0, # epsilon used in evaluation, 0 means no random actions
