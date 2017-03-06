@@ -16,13 +16,12 @@ First clone Chimp:
 ```
 git clone https://github.com/sisl/Chimp
 ```
+Then add the source directory to your `PYTHON_PATH`. 
 
-To install Chimp run setup.py:
 ```
-python setup.py
+cd Chimp
+export PYTHONPATH=$(pwd):$PYTHONPATH
 ```
-
-This will create a symbolic link to the chimp source directory in the folder where your numpy installation lives. If you don't want to add the symbolic link, you can add the chimp source directory to the PYTHON_PATH environmnet variable. 
 
 You will also need numpy and scipy installed, as well as a deep learning backend. Currently only [Chainer](https://github.com/pfnet/chainer) is supported (TensorFlow coming soon). 
 
