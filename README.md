@@ -16,7 +16,7 @@ First clone Chimp:
 ```
 git clone https://github.com/sisl/Chimp
 ```
-Then add the source directory to your `PYTHON_PATH`. 
+Then add the source directory to your `PYTHONPATH`. 
 
 ```
 cd Chimp
